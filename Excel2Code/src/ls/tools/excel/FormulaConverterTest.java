@@ -1,10 +1,12 @@
 package ls.tools.excel;
 
 
+import static com.google.common.base.Objects.equal;
 import static fj.data.List.list;
+import static junit.framework.Assert.assertTrue;
 import static ls.tools.excel.FormulaConverter.param;
 import static ls.tools.excel.model.ExprBuilder.e;
-import static org.junit.Assert.assertEquals;
+import static ls.tools.fj.Util.listsEqual;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,7 +21,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-
+import fj.F2;
 import fj.data.List;
 
 public final class FormulaConverterTest 
@@ -36,7 +38,7 @@ public final class FormulaConverterTest
 	private static final String MULT_FUNC_NAME = "mult";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
-//	private FunctionFormatter ff;
+	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { @Override public Boolean f(Function a, Function b) { return equal(a, b); } };
 	
 	@Before 
 	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
@@ -44,19 +46,18 @@ public final class FormulaConverterTest
 		//!Assumption: it's an openxml format (xlsx, not xls)!
 		_wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
 		fc = new FormulaConverter();
-//		ff = new DefaultFormatter();
 	}
 	
 	@Test
 	public void simple2CellMultiplication() 
 	{
-		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, MULT_FUNC_NAME);
+		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, MULT_FUNC_NAME);
 		@SuppressWarnings("unchecked")
-		final Function expected = new FunctionImpl(MULT_FUNC_NAME, list(param(C3,DECIMAL_FLOAT),param(B3,DECIMAL_FLOAT)), 
+		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,DECIMAL_FLOAT),param(B3,DECIMAL_FLOAT)), 
 				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(
 							e().var(B3).ofType(DECIMAL_FLOAT), 
-							e().var(C3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
-		assertEquals(expected,result);
+							e().var(C3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+		assertTrue(listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	
@@ -65,45 +66,42 @@ public final class FormulaConverterTest
 	@Test
 	public void simpleScalarCellMultiplication() throws Exception
 	{
-		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, TIMES2);
-		@SuppressWarnings("unchecked") final Function expected = new FunctionImpl(TIMES2,list(param(B3,DECIMAL_FLOAT)),
+		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, TIMES2);
+		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,DECIMAL_FLOAT)),
 																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
 																						.andOperands(
 																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().literal().withValue("2").ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
-		assertEquals(expected,result);
+																								e().literal().withValue("2").ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+		assertTrue(listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	@Test
 	public void singleParamUsedTwice() throws Exception
 	{
-		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, SQUARE);
-		@SuppressWarnings("unchecked") final Function expected = new FunctionImpl(SQUARE,list(param(B3,DECIMAL_FLOAT)), 
+		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, SQUARE);
+		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,DECIMAL_FLOAT)), 
 																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
 																						.andOperands(
 																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().var(B3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
-		assertEquals(expected,result);
+																								e().var(B3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 
 	@Test
 	@Ignore
 	public void usingAnotherFormulaAsArgument() throws Exception
 	{
-//		final String result = fc.rdlFrom();
-		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, CUBE);
+		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, CUBE);
 		final VarExpr b3Var = e().var(B3).ofType(DECIMAL_FLOAT);
 		@SuppressWarnings("unchecked")
-		final List<FunctionImpl> expectedFunctions = list(new FunctionImpl(SQUARE,list(param(B3,DECIMAL_FLOAT)),
+		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,DECIMAL_FLOAT)),
 																					e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(b3Var, b3Var), DECIMAL_FLOAT),
-														  new FunctionImpl(CUBE,list(param(B3,DECIMAL_FLOAT)),
+														  FunctionImpl.create(CUBE,list(param(B3,DECIMAL_FLOAT)),
 																					e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
 																							.andOperands(
 																									e().invocationOf(SQUARE).ofType(DECIMAL_FLOAT).withArgs(b3Var),b3Var), DECIMAL_FLOAT)
 																);
-//		final String expected = ff.format(expectedFunctions,"\n");
-		final String expected = "";
-		assertEquals(expected,result);
+		assertTrue(listsEqual(result, expectedFunctions, funcEqPredicate));
 	}
 	
 	private XSSFWorkbook workbook() 

@@ -20,12 +20,15 @@ final class FunctionImpl implements Function
 	private final Expr body;
 	private final String type;
 
-	FunctionImpl(final String _actionName, final List<P2<String,String>> _paramList, final Expr _body)
+	static Function create(final String _actionName, final List<P2<String,String>> _paramList, final Expr _body, final String ret) { return new FunctionImpl(_actionName,_paramList, _body, ret); }
+	
+	
+	private FunctionImpl(final String _actionName, final List<P2<String,String>> _paramList, final Expr _body)
 	{
 		this(_actionName,_paramList,_body,_body.type());
 	}
 	
-	FunctionImpl(final String _actionName, final List<P2<String,String>> _paramList, final Expr _body, final String ret)
+	private FunctionImpl(final String _actionName, final List<P2<String,String>> _paramList, final Expr _body, final String ret)
 	{
 		this.name = checkNotNull(_actionName);
 		this.params = checkNotNull(_paramList);

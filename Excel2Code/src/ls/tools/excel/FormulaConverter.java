@@ -3,17 +3,18 @@ package ls.tools.excel;
 
 import static com.google.common.base.Preconditions.checkState;
 import static fj.Equal.equal;
+import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.CellType.fromSSCellType;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 import java.util.Stack;
 
 import ls.tools.excel.model.Expr;
 
-import org.apache.poi.ss.formula.FormulaParser;
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
 import org.apache.poi.ss.formula.ptg.IntPtg;
@@ -28,7 +29,6 @@ import org.apache.poi.xssf.usermodel.XSSFEvaluationWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-
 import fj.F;
 import fj.P2;
 import fj.data.List;
@@ -39,26 +39,12 @@ public final class FormulaConverter
 
 	private static final int RESOLVE_NAMES_IN_CONTAINING_SHEET = -1;
 	private final Stack<Expr> resultStack = new Stack<>();
-	private List<RefPtg> unresolvedSymbols = List.nil();
+	private List<RefPtg> unresolvedSymbols = nil();
 	private XSSFSheet sheet;
 	private FormulaParsingWorkbook fpwb;
 	private List<Function> generatedFunctions = nil();
-	private final FunctionFormatter formatter = new DefaultFormatter();
-
-	@Deprecated
-	String rdlFrom(final XSSFWorkbook wb, final String sheetName, final String name) 
-	{
-		final Name n = wb.getName(name);
-		final CellReference cr = new CellReference(n.getRefersToFormula());
-		sheet = wb.getSheet(sheetName);
-		fpwb = XSSFEvaluationWorkbook.create(wb);
-		final Cell c = sheet.getRow(cr.getRow()).getCell(cr.getCol());
-		
-		final String formula = c.getCellFormula();
-		return formatter.format(convertFormulaToFunction(name, formula));
-	}
 	
-	Function convertFormulaToFunction(final XSSFWorkbook wb, final String sheetName, final String name)
+	List<Function> convertFormulaToFunction(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
 		final Name n = wb.getName(name);
 		final CellReference cr = new CellReference(n.getRefersToFormula());
@@ -71,11 +57,11 @@ public final class FormulaConverter
 	}
 
 
-	private Function convertFormulaToFunction(final String name, final String formula)
+	private List<Function> convertFormulaToFunction(final String name, final String formula)
 	{
 		checkState(fpwb != null,"Formula parsing workbook must be resolve for parsing a formula");
 		
-		final Ptg[] tokens = FormulaParser.parse(formula, fpwb, FormulaType.CELL, RESOLVE_NAMES_IN_CONTAINING_SHEET);
+		final Ptg[] tokens = parse(formula, fpwb, FormulaType.CELL, RESOLVE_NAMES_IN_CONTAINING_SHEET);
 
 		//tokens are in RPN.
 		for (Ptg token : tokens)
@@ -89,8 +75,7 @@ public final class FormulaConverter
 		}
 
 		final Expr body = resultStack.pop();
-		
-		return new FunctionImpl(name,paramList(),body,body.type());
+		return list(FunctionImpl.create(name,paramList(),body,body.type()));
 	}
 
 	
@@ -174,8 +159,8 @@ public final class FormulaConverter
 			final Cell c = cell(token.toFormulaString());
 			final Option<Name> n = nameForCell(c);
 			final String name = n.isSome() ? n.valueE("No name").getNameName() : token.toFormulaString(); //need to make sure the cell formula of the name is a valid RDL identifier
-			final Function f = convertFormulaToFunction(name, c.getCellFormula());
-			rememberFunction(f);
+			final List<Function> f = convertFormulaToFunction(name, c.getCellFormula());
+			rememberFunction(f.head());
 			//generate the invocation code
 //			resultStack.push(e().invocationOf(name).ofType(f.returnType()))
 		}
