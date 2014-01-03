@@ -36,7 +36,7 @@ public final class FormulaConverterTest
 	private static final String MULT_FUNC_NAME = "mult";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
-	private FunctionFormatter ff;
+//	private FunctionFormatter ff;
 	
 	@Before 
 	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
@@ -44,18 +44,18 @@ public final class FormulaConverterTest
 		//!Assumption: it's an openxml format (xlsx, not xls)!
 		_wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
 		fc = new FormulaConverter();
-		ff = new DefaultFormatter();
+//		ff = new DefaultFormatter();
 	}
 	
 	@Test
 	public void simple2CellMultiplication() 
 	{
-		final String result = fc.rdlFrom(workbook(),SHEET1,MULT_FUNC_NAME);
+		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, MULT_FUNC_NAME);
 		@SuppressWarnings("unchecked")
-		final String expected = ff.format(new FunctionImpl(MULT_FUNC_NAME, list(param(C3,DECIMAL_FLOAT),param(B3,DECIMAL_FLOAT)), 
-															e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(
-																		e().var(B3).ofType(DECIMAL_FLOAT), 
-																		e().var(C3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+		final Function expected = new FunctionImpl(MULT_FUNC_NAME, list(param(C3,DECIMAL_FLOAT),param(B3,DECIMAL_FLOAT)), 
+				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(
+							e().var(B3).ofType(DECIMAL_FLOAT), 
+							e().var(C3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
 		assertEquals(expected,result);
 	}
 	
@@ -65,24 +65,24 @@ public final class FormulaConverterTest
 	@Test
 	public void simpleScalarCellMultiplication() throws Exception
 	{
-		final String result = fc.rdlFrom(workbook(), SHEET1, TIMES2);
-		@SuppressWarnings("unchecked") final String expected = ff.format(new FunctionImpl(TIMES2,list(param(B3,DECIMAL_FLOAT)),
+		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, TIMES2);
+		@SuppressWarnings("unchecked") final Function expected = new FunctionImpl(TIMES2,list(param(B3,DECIMAL_FLOAT)),
 																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
 																						.andOperands(
 																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().literal().withValue("2").ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+																								e().literal().withValue("2").ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
 		assertEquals(expected,result);
 	}
 	
 	@Test
 	public void singleParamUsedTwice() throws Exception
 	{
-		final String result = fc.rdlFrom(workbook(), SHEET1, SQUARE);
-		@SuppressWarnings("unchecked") final String expected = ff.format(new FunctionImpl(SQUARE,list(param(B3,DECIMAL_FLOAT)), 
+		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, SQUARE);
+		@SuppressWarnings("unchecked") final Function expected = new FunctionImpl(SQUARE,list(param(B3,DECIMAL_FLOAT)), 
 																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
 																						.andOperands(
 																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().var(B3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+																								e().var(B3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT);
 		assertEquals(expected,result);
 	}
 
@@ -90,7 +90,8 @@ public final class FormulaConverterTest
 	@Ignore
 	public void usingAnotherFormulaAsArgument() throws Exception
 	{
-		final String result = fc.rdlFrom(workbook(), SHEET1, CUBE);
+//		final String result = fc.rdlFrom();
+		final Function result = fc.convertFormulaToFunction(workbook(), SHEET1, CUBE);
 		final VarExpr b3Var = e().var(B3).ofType(DECIMAL_FLOAT);
 		@SuppressWarnings("unchecked")
 		final List<FunctionImpl> expectedFunctions = list(new FunctionImpl(SQUARE,list(param(B3,DECIMAL_FLOAT)),
@@ -100,7 +101,8 @@ public final class FormulaConverterTest
 																							.andOperands(
 																									e().invocationOf(SQUARE).ofType(DECIMAL_FLOAT).withArgs(b3Var),b3Var), DECIMAL_FLOAT)
 																);
-		final String expected = ff.format(expectedFunctions,"\n");
+//		final String expected = ff.format(expectedFunctions,"\n");
+		final String expected = "";
 		assertEquals(expected,result);
 	}
 	

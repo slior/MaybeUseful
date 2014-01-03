@@ -1,10 +1,11 @@
 package ls.tools.excel;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
@@ -99,7 +100,7 @@ public final class POIInterfaceTests
 	{
 		final CellReference cr = new CellReference("sheet1!$b$3");
 		final Sheet s = wb.getSheet(cr.getSheetName());
-		final Cell c = s.getRow(cr.getRow()).getCell(cr.getCol());
+		s.getRow(cr.getRow()).getCell(cr.getCol());
 	}
 	
 	@Test

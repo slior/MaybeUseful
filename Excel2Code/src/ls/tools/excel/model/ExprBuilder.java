@@ -1,15 +1,34 @@
 package ls.tools.excel.model;
 
+import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
+import static java.util.Arrays.deepHashCode;
+import static java.util.Objects.hash;
+import static ls.tools.fj.Util.listsEqual;
+import fj.F2;
 import fj.data.List;
 
 public final class ExprBuilder
 {
 
-	
+	private static class ExprEqualsPredicate extends F2<Expr,Expr,Boolean>
+	{
 
-	private ExprBuilder() {};
+		@Override
+		public Boolean f(final Expr a, final Expr b)
+		{
+			if (a == null) return b == null;
+			return a.equals(b);
+		}
+		
+	}
+	
+	private final ExprEqualsPredicate exprEqlPredicate = new ExprEqualsPredicate();
+	
+	private ExprBuilder() {
+		
+	};
 	
 	private static final ExprBuilder mainBuilderInstance = new ExprBuilder(); 
 	public static ExprBuilder e() { return mainBuilderInstance; } //we can it this way since it doesn't hold any state
@@ -35,8 +54,27 @@ public final class ExprBuilder
 
 					@Override public String type() { return _t; }
 
-					@Override public String name() { return n; }};
+					@Override public String name() { return n; }
+
+					@Override
+					public boolean equals(final Object that)
+					{
+						if (this == that) return true;
+						if (that == null) return false;
+						if (!(that instanceof VarExpr)) return false;
+						final VarExpr ve = (VarExpr)that;
+						return equal(type(), ve.type()) && equal(name(),ve.name());
+					}
+
+					@Override
+					public int hashCode() { return hash(this.name(),this.type()); }
+
+
+				};
+					
+					
 			}
+
 		};
 	}
 	
@@ -72,6 +110,20 @@ public final class ExprBuilder
 
 					@Override
 					public String value() { return v; }
+
+					@Override
+					public boolean equals(Object that)
+					{
+						if (this == that) return true;
+						if (that == null) return false;
+						if (!(that instanceof LiteralExpr)) return false;
+						final LiteralExpr le = (LiteralExpr)that;
+						return equal(type(),le.type()) && equal(value(),le.value());
+					}
+
+					@Override public int hashCode() { return hash(type(),value()); }
+					
+					
 				};
 			}
 		};
@@ -117,6 +169,23 @@ public final class ExprBuilder
 					@Override public List<Expr> subExpressions() { return list(e1,e2); }
 					
 					@Override public String op() { return op; }
+
+					@Override
+					public boolean equals(final Object that)
+					{
+						if (this == that) return true;
+						if (that == null) return false;
+						if (!(that instanceof BinOpExpr)) return false;
+						final BinOpExpr boe = (BinOpExpr)that;
+						return 	equal(type(),boe.type()) &&
+								equal(op(),boe.op()) &&
+								listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+					}
+
+					@Override
+					public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
+					
+					
 				};
 			}
 		};
@@ -148,6 +217,20 @@ public final class ExprBuilder
 					@Override public List<Expr> args() { return args; }
 
 					@Override public String type() { return type; }
+
+					@Override
+					public boolean equals(Object that)
+					{
+						if (this == that) return true;
+						if (that == null) return false;
+						if (!(that instanceof FunctionExpr)) return false;
+						final FunctionExpr fe = (FunctionExpr)that;
+						return equal(functionName(),fe.functionName()) && equal(type(),fe.type()) && listsEqual(args(), fe.args(), exprEqlPredicate);
+					}
+
+					@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
+					
+					
 					
 				};
 			}

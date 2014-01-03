@@ -45,6 +45,7 @@ public final class FormulaConverter
 	private List<Function> generatedFunctions = nil();
 	private final FunctionFormatter formatter = new DefaultFormatter();
 
+	@Deprecated
 	String rdlFrom(final XSSFWorkbook wb, final String sheetName, final String name) 
 	{
 		final Name n = wb.getName(name);
@@ -55,6 +56,18 @@ public final class FormulaConverter
 		
 		final String formula = c.getCellFormula();
 		return formatter.format(convertFormulaToFunction(name, formula));
+	}
+	
+	Function convertFormulaToFunction(final XSSFWorkbook wb, final String sheetName, final String name)
+	{
+		final Name n = wb.getName(name);
+		final CellReference cr = new CellReference(n.getRefersToFormula());
+		sheet = wb.getSheet(sheetName);
+		fpwb = XSSFEvaluationWorkbook.create(wb);
+		final Cell c = sheet.getRow(cr.getRow()).getCell(cr.getCol());
+		
+		final String formula = c.getCellFormula();
+		return convertFormulaToFunction(name, formula);
 	}
 
 
