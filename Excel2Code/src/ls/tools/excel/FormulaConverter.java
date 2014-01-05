@@ -44,7 +44,7 @@ public final class FormulaConverter
 	private FormulaParsingWorkbook fpwb;
 	private List<Function> generatedFunctions = nil();
 	
-	List<Function> convertFormulaToFunction(final XSSFWorkbook wb, final String sheetName, final String name)
+	List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
 		final Name n = wb.getName(name);
 		final CellReference cr = new CellReference(n.getRefersToFormula());
@@ -144,7 +144,7 @@ public final class FormulaConverter
 			final Option<Name> n = nameForCell(c);
 			final String name = n.isSome() ? n.valueE("No name").getNameName() : token.toFormulaString();
 			final List<Function> f = convertFormulaToFunction(name, c.getCellFormula());
-			rememberFunction(f.head());
+			rememberFunctions(f);
 			//generate the invocation code
 //			resultStack.push(e().invocationOf(name).ofType(f.returnType()))
 		}
@@ -155,9 +155,10 @@ public final class FormulaConverter
 		}
 	}
 
-	private void rememberFunction(final Function f)
+	private void rememberFunctions(final List<Function> f)
 	{
-		generatedFunctions = generatedFunctions .cons(f);
+//		generatedFunctions = generatedFunctions .cons(f);
+		generatedFunctions = generatedFunctions .append(f);
 	}
 	
 	private Option<Name> nameForCell(final Cell c)

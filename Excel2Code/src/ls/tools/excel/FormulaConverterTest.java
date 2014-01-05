@@ -51,7 +51,7 @@ public final class FormulaConverterTest
 	@Test
 	public void simple2CellMultiplication() 
 	{
-		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, MULT_FUNC_NAME);
+		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, MULT_FUNC_NAME);
 		@SuppressWarnings("unchecked")
 		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
@@ -66,7 +66,7 @@ public final class FormulaConverterTest
 	@Test
 	public void simpleScalarCellMultiplication() throws Exception
 	{
-		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, TIMES2);
+		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
 		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
 																				e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
@@ -78,7 +78,7 @@ public final class FormulaConverterTest
 	@Test
 	public void singleParamUsedTwice() throws Exception
 	{
-		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, SQUARE);
+		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
 																				e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
@@ -88,10 +88,9 @@ public final class FormulaConverterTest
 	}
 
 	@Test
-	@Ignore
 	public void usingAnotherFormulaAsArgument() throws Exception
 	{
-		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, CUBE);
+		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE);
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
 		@SuppressWarnings("unchecked")
 		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
