@@ -8,7 +8,7 @@ import fj.data.List;
 public interface Function
 {
 	String name();
-	List<P2<String, String>> parameters();
+	List<P2<String, CellType>> parameters();
 	Expr body();  //function body is currently a single expression
-	String returnType();
+	CellType returnType();
 }

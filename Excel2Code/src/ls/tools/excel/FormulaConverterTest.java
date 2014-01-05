@@ -4,6 +4,7 @@ package ls.tools.excel;
 import static com.google.common.base.Objects.equal;
 import static fj.data.List.list;
 import static junit.framework.Assert.assertTrue;
+import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.FormulaConverter.param;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.fj.Util.listsEqual;
@@ -30,7 +31,6 @@ public final class FormulaConverterTest
 	private static final String MULT_OP = "*";
 	private static final String C3 = "C3";
 	private static final String B3 = "B3";
-	private static final String DECIMAL_FLOAT = "DecimalFloat";
 	private static final String CUBE = "cube";
 	private static final String SQUARE = "square";
 	private static final String TIMES2 = "times2";
@@ -53,10 +53,10 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, MULT_FUNC_NAME);
 		@SuppressWarnings("unchecked")
-		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,DECIMAL_FLOAT),param(B3,DECIMAL_FLOAT)), 
-				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(
-							e().var(B3).ofType(DECIMAL_FLOAT), 
-							e().var(C3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
+				e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
+							e().var(B3).ofType(NUMERIC), 
+							e().var(C3).ofType(NUMERIC)), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate ));
 	}
 	
@@ -67,11 +67,11 @@ public final class FormulaConverterTest
 	public void simpleScalarCellMultiplication() throws Exception
 	{
 		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, TIMES2);
-		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,DECIMAL_FLOAT)),
-																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
+		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
+																				e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
-																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().literal().withValue("2").ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+																								e().var(B3).ofType(NUMERIC), 
+																								e().literal().withValue("2").ofType(NUMERIC)), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate ));
 	}
 	
@@ -79,11 +79,11 @@ public final class FormulaConverterTest
 	public void singleParamUsedTwice() throws Exception
 	{
 		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, SQUARE);
-		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,DECIMAL_FLOAT)), 
-																				e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
+		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
+																				e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
-																								e().var(B3).ofType(DECIMAL_FLOAT), 
-																								e().var(B3).ofType(DECIMAL_FLOAT)), DECIMAL_FLOAT));
+																								e().var(B3).ofType(NUMERIC), 
+																								e().var(B3).ofType(NUMERIC)), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 
@@ -92,14 +92,14 @@ public final class FormulaConverterTest
 	public void usingAnotherFormulaAsArgument() throws Exception
 	{
 		final List<Function> result = fc.convertFormulaToFunction(workbook(), SHEET1, CUBE);
-		final VarExpr b3Var = e().var(B3).ofType(DECIMAL_FLOAT);
+		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
 		@SuppressWarnings("unchecked")
-		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,DECIMAL_FLOAT)),
-																					e().binOp(MULT_OP).ofType(DECIMAL_FLOAT).andOperands(b3Var, b3Var), DECIMAL_FLOAT),
-														  FunctionImpl.create(CUBE,list(param(B3,DECIMAL_FLOAT)),
-																					e().binOp(MULT_OP).ofType(DECIMAL_FLOAT)
+		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
+																					e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var), NUMERIC),
+														  FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
+																					e().binOp(MULT_OP).ofType(NUMERIC)
 																							.andOperands(
-																									e().invocationOf(SQUARE).ofType(DECIMAL_FLOAT).withArgs(b3Var),b3Var), DECIMAL_FLOAT)
+																									e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var),b3Var), NUMERIC)
 																);
 		assertTrue(listsEqual(result, expectedFunctions, funcEqPredicate));
 	}

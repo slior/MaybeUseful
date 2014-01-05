@@ -6,6 +6,7 @@ import static fj.data.List.list;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.fj.Util.listsEqual;
+import ls.tools.excel.CellType;
 import fj.F2;
 import fj.data.List;
 
@@ -35,7 +36,7 @@ public final class ExprBuilder
 	
 	private static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
 	
-	public interface VarBuilder { VarExpr ofType(String _t); }
+	public interface VarBuilder { VarExpr ofType(CellType _t); }
 		
 	/**
 	 * Enables <code>create().var("name").ofType("type")</code>
@@ -47,12 +48,12 @@ public final class ExprBuilder
 
 			final String n = _n; 
 			
-			@Override public VarExpr ofType(final String _t)
+			@Override public VarExpr ofType(final CellType _t)
 			{
-				checkArgument(notEmpty(_t),"Type can't be empty");
+				checkArgument(_t != null,"Type can't be null");
 				return new VarExpr() {
 
-					@Override public String type() { return _t; }
+					@Override public CellType type() { return _t; }
 
 					@Override public String name() { return n; }
 
@@ -83,7 +84,7 @@ public final class ExprBuilder
 	public interface LiteralBuilder
 	{
 		LiteralBuilder withValue(String val);
-		LiteralExpr ofType(String typeName);
+		LiteralExpr ofType(CellType type);
 	}
 	
 	/**
@@ -101,12 +102,12 @@ public final class ExprBuilder
 
 			}
 
-			@Override public LiteralExpr ofType(final String typeName)
+			@Override public LiteralExpr ofType(final CellType type)
 			{
-				checkArgument(notEmpty(typeName),"type name can't be null");
+				checkArgument(type != null,"type can't be null");
 				return new LiteralExpr() {
 
-					@Override public String type() { return typeName; }
+					@Override public CellType type() { return type; }
 
 					@Override
 					public String value() { return v; }
@@ -132,7 +133,7 @@ public final class ExprBuilder
 	
 	public interface BinOpBuilder
 	{
-		BinOpBuilder ofType(String type);
+		BinOpBuilder ofType(CellType type);
 		BinOpExpr andOperands(Expr e1,Expr e2);
 	}
 
@@ -146,12 +147,12 @@ public final class ExprBuilder
 		return new BinOpBuilder()
 		{
 			final String op = _op;
-			String type;
+			CellType type;
 			
 			@Override
-			public BinOpBuilder ofType(final String _type)
+			public BinOpBuilder ofType(final CellType _type)
 			{
-				checkArgument(notEmpty(_type), "type of operator can't be null");
+				checkArgument(_type != null, "type of operator can't be null");
 				type = _type;
 				return this;
 			}
@@ -164,7 +165,7 @@ public final class ExprBuilder
 				return new BinOpExpr()
 				{
 					
-					@Override public String type() { return type; }
+					@Override public CellType type() { return type; }
 					
 					@Override public List<Expr> subExpressions() { return list(e1,e2); }
 					
@@ -195,7 +196,7 @@ public final class ExprBuilder
 	
 	public interface FunctionInvocationBuilder
 	{
-		FunctionInvocationBuilder ofType(String t);
+		FunctionInvocationBuilder ofType(CellType t);
 		FunctionExpr withArgs(Expr... args );
 
 	}
@@ -205,7 +206,7 @@ public final class ExprBuilder
 		checkArgument(notEmpty(funcName),"Function name can't be empty");
 		return new FunctionInvocationBuilder()
 		{
-			private String type;
+			private CellType type;
 
 			@Override public FunctionExpr withArgs(final Expr... _args)
 			{
@@ -216,7 +217,7 @@ public final class ExprBuilder
 
 					@Override public List<Expr> args() { return args; }
 
-					@Override public String type() { return type; }
+					@Override public CellType type() { return type; }
 
 					@Override
 					public boolean equals(Object that)
@@ -235,9 +236,9 @@ public final class ExprBuilder
 				};
 			}
 
-			@Override public FunctionInvocationBuilder ofType(final String t)
+			@Override public FunctionInvocationBuilder ofType(final CellType t)
 			{
-				checkArgument(notEmpty(t),"Type can't be empty"); //should also check for validity of the type
+				checkArgument(t != null,"Type can't be null"); //should also check for validity of the type
 				type = t;
 				return this;
 			}

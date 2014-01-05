@@ -54,12 +54,12 @@ final class DefaultFormatter implements FunctionFormatter
 		
 	}
 
-	private String formatParams(final List<P2<String, String>> parameters)
+	private String formatParams(final List<P2<String, CellType>> list)
 	{
-		final String ret = parameters.foldRight(new F2<P2<String,String>,String,String>()
+		final String ret = list.foldRight(new F2<P2<String,CellType>,String,String>()
 		{
 			@Override
-			public String f(P2<String, String> param, String accum)
+			public String f(P2<String, CellType> param, String accum)
 			{
 				return param._1() + " : " + param._2() + "," + accum; 
 			}

@@ -82,7 +82,7 @@ public final class FormulaConverter
 	
 	private void handleIntLiteral(final IntPtg token)
 	{
-		resultStack.push(e().literal().withValue(token.toFormulaString()).ofType(rdlType(NUMERIC)));
+		resultStack.push(e().literal().withValue(token.toFormulaString()).ofType(NUMERIC));
 	}
 
 
@@ -93,25 +93,9 @@ public final class FormulaConverter
 		return sheet.getRow(cr.getRow()).getCell(cr.getCol());
 	}
 	
-	private String rdlType(final CellType ct)
+	private List<P2<String, CellType>> paramList()
 	{
-		String ret = "";
-		switch (ct)
-		{
-			case NUMERIC : ret = "DecimalFloat"; break;
-			case BLANK :
-			case STRING : ret = "String"; break;
-			case BOOLEAN : ret = "Boolean"; break;
-			case FORMULA : 
-			case ERROR : 
-				throw new IllegalArgumentException("Don't have an rdl type for: " + ct.name());
-		}
-		return ret;
-	}
-	
-	private List<P2<String, String>> paramList()
-	{
-		final List<P2<String,String>> ret = unresolvedSymbols
+		final List<P2<String,CellType>> ret = unresolvedSymbols
 				//Remove duplicates
 				.nub(equal(new F<RefPtg, F<RefPtg,Boolean>>() {
 					@Override public F<RefPtg, Boolean> f(final RefPtg r1) {
@@ -125,21 +109,21 @@ public final class FormulaConverter
 					@Override public Boolean f(RefPtg a) { return typeOfCellReferencedBy(a) != CellType.FORMULA; }
 				})
 				//Convert references to param declarations
-				.map(new F<RefPtg,P2<String,String>>() {
-						@Override public P2<String,String> f(final RefPtg token)
+				.map(new F<RefPtg,P2<String,CellType>>() {
+						@Override public P2<String,CellType> f(final RefPtg token)
 						{
-							return param(token.toFormulaString(),rdlType(typeOfCellReferencedBy(token)));
+							return param(token.toFormulaString(),typeOfCellReferencedBy(token));
 						}});
 		return ret;
 	}
 	
-	static final P2<String,String> param(final String name, final String type)
+	static final P2<String,CellType> param(final String name, final CellType type)
 	{
-		return new P2<String,String>() 
+		return new P2<String,CellType>() 
 		{
 			@Override public String _1() { return name; }
 
-			@Override public String _2() { return type; }
+			@Override public CellType _2() { return type; }
 		};
 	}
 
@@ -148,7 +132,7 @@ public final class FormulaConverter
 		checkState(resultStack.size() >= 2,"Must have at least 2 operands for multiplication");
 		final Expr op2 = resultStack.pop();
 		final Expr op1 = resultStack.pop();
-		resultStack.push(e().binOp("*").ofType(rdlType(NUMERIC)).andOperands(op1,op2));
+		resultStack.push(e().binOp("*").ofType(NUMERIC).andOperands(op1,op2));
 		
 	}
 
@@ -158,7 +142,7 @@ public final class FormulaConverter
 		{
 			final Cell c = cell(token.toFormulaString());
 			final Option<Name> n = nameForCell(c);
-			final String name = n.isSome() ? n.valueE("No name").getNameName() : token.toFormulaString(); //need to make sure the cell formula of the name is a valid RDL identifier
+			final String name = n.isSome() ? n.valueE("No name").getNameName() : token.toFormulaString();
 			final List<Function> f = convertFormulaToFunction(name, c.getCellFormula());
 			rememberFunction(f.head());
 			//generate the invocation code
@@ -167,7 +151,7 @@ public final class FormulaConverter
 		else
 		{
 			unresolvedSymbols = unresolvedSymbols.cons(token);
-			resultStack.push(e().var(token.toFormulaString()).ofType(rdlType(typeOfCellReferencedBy(token))));
+			resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
 		}
 	}
 

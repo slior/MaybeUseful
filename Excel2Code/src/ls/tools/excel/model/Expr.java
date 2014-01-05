@@ -1,6 +1,8 @@
 package ls.tools.excel.model;
 
+import ls.tools.excel.CellType;
+
 public interface Expr
 {
-	String type();
+	CellType type();
 }

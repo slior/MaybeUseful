@@ -2,7 +2,7 @@ package ls.tools.excel;
 
 import org.apache.poi.ss.usermodel.Cell;
 
-enum CellType
+public enum CellType
 {
 	NUMERIC(Cell.CELL_TYPE_NUMERIC), 
 	STRING(Cell.CELL_TYPE_STRING), 
