@@ -2,7 +2,7 @@ package ls.tools.excel;
 
 import fj.data.List;
 
-interface FunctionFormatter
+public interface FunctionFormatter
 {
 
 	String format(final Function f);
