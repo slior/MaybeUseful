@@ -4,12 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import ls.tools.excel.model.BinOpExpr;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.LiteralExpr;
+import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
-
-
 import fj.F;
 import fj.F2;
-import fj.P2;
 import fj.data.List;
 
 final class DefaultFormatter implements FunctionFormatter
@@ -54,14 +52,14 @@ final class DefaultFormatter implements FunctionFormatter
 		
 	}
 
-	private String formatParams(final List<P2<String, CellType>> list)
+	private String formatParams(final List<Param> list)
 	{
-		final String ret = list.foldRight(new F2<P2<String,CellType>,String,String>()
+		final String ret = list.foldRight(new F2<Param,String,String>()
 		{
 			@Override
-			public String f(P2<String, CellType> param, String accum)
+			public String f(Param param, String accum)
 			{
-				return param._1() + " : " + param._2() + "," + accum; 
+				return param.name() + " : " + param.type() + "," + accum; 
 			}
 		}, "");
 		return ret.substring(0,ret.length()-1);

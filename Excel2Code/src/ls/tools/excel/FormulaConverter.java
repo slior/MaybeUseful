@@ -3,7 +3,6 @@ package ls.tools.excel;
 
 import static com.google.common.base.Preconditions.checkState;
 import static fj.Equal.equal;
-import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
@@ -15,6 +14,7 @@ import java.util.Stack;
 
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
@@ -160,7 +160,7 @@ public final class FormulaConverter
 			//Assumption: the last function is the one we need to work with.
 			final Function funcToInvoke = f.last();
 			final List<VarExpr> args = funcToInvoke.parameters().map( //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
-					new F<P2<String,CellType>,VarExpr>() { @Override public VarExpr f(final P2<String, CellType> a) { return e().var(a._1()).ofType(a._2()); }});
+					new F<Param,VarExpr>() { @Override public VarExpr f(final Param a) { return e().var(a.name()).ofType(a.type()); }});
 			
 			final Binding resultVarBinding = e().bind(var(token.toFormulaString(), f.last().returnType()))
 												.to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
