@@ -7,6 +7,7 @@ import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.fj.Util.listsEqual;
 import ls.tools.excel.CellType;
+import ls.tools.excel.Function;
 import fj.F2;
 import fj.data.List;
 
@@ -242,6 +243,46 @@ public final class ExprBuilder
 				type = t;
 				return this;
 			}
+		};
+	}
+	
+	public FunctionInvocationBuilder invocationOf(final Function func)
+	{
+		return invocationOf(func.name()).ofType(func.returnType());
+	}
+
+	public interface BindBuilder
+	{
+		Binding to(final Expr expr);
+	}
+	
+	public BindBuilder bind(final VarExpr varExpr)
+	{
+		checkArgument(varExpr != null,"Var can't be null for binding");
+		return new BindBuilder()
+		{
+
+			@Override public Binding to(final Expr expr)
+			{
+				checkArgument(expr != null,"expression can't be null for binding");
+				return new Binding()
+				{
+					@Override public VarExpr var() { return varExpr;}
+					@Override public Expr expression() { return expr; }
+					@Override public CellType type() { return expression().type(); }
+				};
+			}
+			
+		};
+	}
+
+	public CompositeExpr sequence(final Expr... expressions)
+	{
+		checkArgument(expressions != null && expressions.length > 0,"Can't have empty expression list for sequence");
+		return new CompositeExpr()
+		{
+			@Override public List<Expr> subExpressions() { return list(expressions); }
+			@Override public CellType type() { return subExpressions().last().type(); }
 		};
 	}
 

@@ -13,13 +13,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import fj.F2;
@@ -92,13 +92,14 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE);
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
+		final VarExpr d3Var = e().var("D3").ofType(NUMERIC);
 		@SuppressWarnings("unchecked")
 		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
 																					e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var), NUMERIC),
 														  FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
-																					e().binOp(MULT_OP).ofType(NUMERIC)
-																							.andOperands(
-																									e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var),b3Var), NUMERIC)
+																  					e().sequence(
+																  						e().bind(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),
+																						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(d3Var,b3Var)), NUMERIC)
 																);
 		assertTrue(listsEqual(result, expectedFunctions, funcEqPredicate));
 	}

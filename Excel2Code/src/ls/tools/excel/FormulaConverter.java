@@ -13,7 +13,9 @@ import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 import java.util.Stack;
 
+import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
@@ -74,8 +76,17 @@ public final class FormulaConverter
 				handleIntLiteral((IntPtg)token);
 		}
 
-		final Expr body = resultStack.pop();
-		return list(FunctionImpl.create(name,paramList(),body,body.type()));
+//		final Expr body = resultStack.pop();
+		final Expr body = e().sequence(resultStack.toArray(new Expr[resultStack.size()]));
+		final List<Function> ret = generatedFunctions.snoc(FunctionImpl.create(name,paramList(),body,body.type()));
+		clearGeneratedFunctions();
+		return ret;
+	}
+
+
+	private void clearGeneratedFunctions()
+	{
+		generatedFunctions = nil();
 	}
 
 	
@@ -143,10 +154,17 @@ public final class FormulaConverter
 			final Cell c = cell(token.toFormulaString());
 			final Option<Name> n = nameForCell(c);
 			final String name = n.isSome() ? n.valueE("No name").getNameName() : token.toFormulaString();
-			final List<Function> f = convertFormulaToFunction(name, c.getCellFormula());
+			final List<Function> f = convertFormulaToFunction(name, c.getCellFormula()); 
 			rememberFunctions(f);
 			//generate the invocation code
-//			resultStack.push(e().invocationOf(name).ofType(f.returnType()))
+			//Assumption: the last function is the one we need to work with.
+			final Function funcToInvoke = f.last();
+			final List<VarExpr> args = funcToInvoke.parameters().map( //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
+					new F<P2<String,CellType>,VarExpr>() { @Override public VarExpr f(final P2<String, CellType> a) { return e().var(a._1()).ofType(a._2()); }});
+			
+			final Binding resultVarBinding = e().bind(var(token.toFormulaString(), f.last().returnType()))
+												.to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
+			resultStack.push(resultVarBinding);
 		}
 		else
 		{
@@ -155,9 +173,14 @@ public final class FormulaConverter
 		}
 	}
 
+
+	private VarExpr var(final String varName, final CellType varType)
+	{
+		return e().var(varName).ofType(varType);
+	}
+
 	private void rememberFunctions(final List<Function> f)
 	{
-//		generatedFunctions = generatedFunctions .cons(f);
 		generatedFunctions = generatedFunctions .append(f);
 	}
 	
