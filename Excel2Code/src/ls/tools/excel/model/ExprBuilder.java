@@ -28,7 +28,7 @@ public final class ExprBuilder
 		
 	}
 	
-	private final ExprEqualsPredicate exprEqlPredicate = new ExprEqualsPredicate();
+	private static final ExprEqualsPredicate exprEqlPredicate = new ExprEqualsPredicate();
 	
 	private ExprBuilder() {
 		
@@ -244,7 +244,7 @@ public final class ExprBuilder
 		Binding to(final Expr expr);
 	}
 	
-	public BindBuilder bind(final VarExpr varExpr)
+	public BindBuilder bindingOf(final VarExpr varExpr)
 	{
 		checkArgument(varExpr != null,"Var can't be null for binding");
 		return new BindBuilder()
@@ -274,29 +274,58 @@ public final class ExprBuilder
 		};
 	}
 
+	private static final class CompositeSequence implements CompositeExpr
+	{
+		private final List<Expr> expressions;
+		CompositeSequence(final List<Expr> _exprs)
+		{
+			checkArgument(_exprs != null && _exprs.length() > 0,"Can't have empty expression list for sequence");
+			this.expressions = _exprs;
+		}
+		@Override public List<Expr> subExpressions() { return expressions; }
+		@Override public CellType type() { return subExpressions().last().type(); }
+		@Override public boolean equals(Object that)
+		{
+			final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
+			if (!genResult._1()) return false;
+			return listsEqual(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
+		}
+		
+		@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
+		@Override public String toString()
+		{
+			return subExpressions().foldRight(new F2<Expr,String,String>() {
+				@Override public String f(Expr a, String accum) { return a.toString() + ";\n" + accum; }}, "");
+		}
+	}
+	
 	public CompositeExpr sequence(final Expr... expressions)
 	{
-		checkArgument(expressions != null && expressions.length > 0,"Can't have empty expression list for sequence");
-		return new CompositeExpr()
-		{
-			@Override public List<Expr> subExpressions() { return list(expressions); }
-			@Override public CellType type() { return subExpressions().last().type(); }
-			@Override public boolean equals(Object that)
-			{
-				final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
-				if (!genResult._1()) return false;
-				return listsEqual(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
-			}
-			
-			@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
-			@Override public String toString()
-			{
-				return subExpressions().foldRight(new F2<Expr,String,String>() {
-					@Override public String f(Expr a, String accum) { return a.toString() + ";\n" + accum; }}, "");
-			}
-			
-			
-		};
+		return new CompositeSequence(list(expressions));
+//		checkArgument(expressions != null && expressions.length > 0,"Can't have empty expression list for sequence");
+//		return new CompositeExpr()
+//		{
+//			@Override public List<Expr> subExpressions() { return list(expressions); }
+//			@Override public CellType type() { return subExpressions().last().type(); }
+//			@Override public boolean equals(Object that)
+//			{
+//				final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
+//				if (!genResult._1()) return false;
+//				return listsEqual(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
+//			}
+//			
+//			@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
+//			@Override public String toString()
+//			{
+//				return subExpressions().foldRight(new F2<Expr,String,String>() {
+//					@Override public String f(Expr a, String accum) { return a.toString() + ";\n" + accum; }}, "");
+//			}
+//		};
+	}
+	
+	public CompositeExpr sequence(final List<Expr> expressions)
+	{
+		return new CompositeSequence(expressions);
 	}
 
 }

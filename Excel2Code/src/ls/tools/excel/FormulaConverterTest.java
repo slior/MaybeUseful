@@ -1,7 +1,6 @@
 package ls.tools.excel;
 
 
-import static com.google.common.base.Objects.equal;
 import static fj.data.List.list;
 import static junit.framework.Assert.assertTrue;
 import static ls.tools.excel.CellType.NUMERIC;
@@ -108,7 +107,7 @@ public final class FormulaConverterTest
 																					e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
 														  FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
 																  					e().sequence(
-																  						e().bind(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),
+																  						e().bindingOf(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),
 																						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(d3Var,b3Var)), NUMERIC)
 																);
 		assertTrue(listsEqual(result, expectedFunctions, funcEqPredicate));
