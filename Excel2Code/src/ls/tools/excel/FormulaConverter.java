@@ -93,7 +93,7 @@ public final class FormulaConverter
 	
 	private void handleIntLiteral(final IntPtg token)
 	{
-		resultStack.push(e().literal().withValue(token.toFormulaString()).ofType(NUMERIC));
+		resultStack.push(e().literal(token.toFormulaString()).ofType(NUMERIC));
 	}
 
 

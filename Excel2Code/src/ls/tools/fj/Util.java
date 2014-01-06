@@ -2,6 +2,7 @@ package ls.tools.fj;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import fj.F2;
+import fj.P2;
 import fj.data.List;
 
 public final class Util
@@ -16,9 +17,24 @@ public final class Util
 		if (list1 == null) return list2 == null;
 		if (list1.length() != list2.length()) return false;
 		if (list1.isEmpty()) return list2.isEmpty();
-		
-		return elementsEqualsPredicate.f(list1.head(), list2.head()) && listsEqual(list1.tail(), list2.tail(), elementsEqualsPredicate);
+		final boolean restIsEql = listsEqual(list1.tail(), list2.tail(), elementsEqualsPredicate);
+		return elementsEqualsPredicate.f(list1.head(), list2.head()) && restIsEql;
 	}
 	
 	
+	public static <A,B> P2<A,B> pair(final A a, final B b) {
+		return new P2<A,B>() {
+			@Override public A _1() { return a; }
+			@Override public B _2() { return b; }
+		};
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> P2<Boolean,T> genericEqualAndCast(Object a, Object b, Class<T> cls)
+	{
+		if (a == b) return pair(true,(T)b);
+		if (b == null) return pair(a == null,null);
+		if (!(cls.isAssignableFrom(b.getClass()))) return pair(false,null);
+		return pair(true,(T)b);
+	}
 }

@@ -37,7 +37,15 @@ public final class FormulaConverterTest
 	private static final String MULT_FUNC_NAME = "mult";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
-	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { @Override public Boolean f(Function a, Function b) { return equal(a, b); } };
+	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { 
+		@Override public Boolean f(Function a, Function b) 
+		{
+			if (a == null) return b == null;
+			final boolean ret = a.equals(b);
+			return ret;
+//			return equal(a, b); 
+		} 
+	};
 	
 	@Before 
 	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
@@ -53,10 +61,11 @@ public final class FormulaConverterTest
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, MULT_FUNC_NAME);
 		@SuppressWarnings("unchecked")
 		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
-				e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
+				e().sequence(
+						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
 							e().var(B3).ofType(NUMERIC), 
-							e().var(C3).ofType(NUMERIC)), NUMERIC));
-		assertTrue(listsEqual(result, expected, funcEqPredicate ));
+							e().var(C3).ofType(NUMERIC))), NUMERIC));
+		assertTrue("Simple 2 cell multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	
@@ -67,11 +76,12 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
 		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
-																				e().binOp(MULT_OP).ofType(NUMERIC)
+																				e().sequence(
+																						e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
 																								e().var(B3).ofType(NUMERIC), 
-																								e().literal().withValue("2").ofType(NUMERIC)), NUMERIC));
-		assertTrue(listsEqual(result, expected, funcEqPredicate ));
+																								e().literal("2").ofType(NUMERIC))), NUMERIC));
+		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	@Test
@@ -79,10 +89,11 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
-																				e().binOp(MULT_OP).ofType(NUMERIC)
-																						.andOperands(
+																				e().sequence(
+																						e().binOp(MULT_OP).ofType(NUMERIC)
+																							.andOperands(
 																								e().var(B3).ofType(NUMERIC), 
-																								e().var(B3).ofType(NUMERIC)), NUMERIC));
+																								e().var(B3).ofType(NUMERIC))), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 
@@ -94,7 +105,7 @@ public final class FormulaConverterTest
 		final VarExpr d3Var = e().var("D3").ofType(NUMERIC);
 		@SuppressWarnings("unchecked")
 		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
-																					e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var), NUMERIC),
+																					e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
 														  FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
 																  					e().sequence(
 																  						e().bind(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),

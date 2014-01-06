@@ -5,10 +5,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
+import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import ls.tools.excel.CellType;
 import ls.tools.excel.Function;
 import fj.F2;
+import fj.P2;
 import fj.data.List;
 
 public final class ExprBuilder
@@ -55,21 +57,17 @@ public final class ExprBuilder
 				return new VarExpr() {
 
 					@Override public CellType type() { return _t; }
-
 					@Override public String name() { return n; }
-
-					@Override
-					public boolean equals(final Object that)
+					@Override public boolean equals(final Object that)
 					{
-						if (this == that) return true;
-						if (that == null) return false;
-						if (!(that instanceof VarExpr)) return false;
-						final VarExpr ve = (VarExpr)that;
-						return equal(type(), ve.type()) && equal(name(),ve.name());
+						final P2<Boolean,VarExpr> gr = genericEqualAndCast(this, that, VarExpr.class);
+						return gr._1() && equal(type(), gr._2().type()) && equal(name(),gr._2().name());
 					}
 
-					@Override
-					public int hashCode() { return hash(this.name(),this.type()); }
+					@Override public int hashCode() { return hash(this.name(),this.type()); }
+					@Override public String toString() { return name() + " : " + type().toString(); }
+					
+					
 
 
 				};
@@ -84,24 +82,15 @@ public final class ExprBuilder
 	
 	public interface LiteralBuilder
 	{
-		LiteralBuilder withValue(String val);
 		LiteralExpr ofType(CellType type);
 	}
 	
 	/**
 	 * Enables <code>create().literal().withValue("val").ofType("type");</code>
 	 */
-	public LiteralBuilder literal()
+	public LiteralBuilder literal(final String val)
 	{
 		return new LiteralBuilder() {
-			String v;
-			@Override public LiteralBuilder withValue(final String val) 
-			{
-				checkArgument(notEmpty(val),"Value can't be empty");
-				v = val;
-				return this;
-
-			}
 
 			@Override public LiteralExpr ofType(final CellType type)
 			{
@@ -111,7 +100,7 @@ public final class ExprBuilder
 					@Override public CellType type() { return type; }
 
 					@Override
-					public String value() { return v; }
+					public String value() { return val; }
 
 					@Override
 					public boolean equals(Object that)
@@ -124,6 +113,7 @@ public final class ExprBuilder
 					}
 
 					@Override public int hashCode() { return hash(type(),value()); }
+					@Override public String toString() { return value(); }
 					
 					
 				};
@@ -167,13 +157,9 @@ public final class ExprBuilder
 				{
 					
 					@Override public CellType type() { return type; }
-					
 					@Override public List<Expr> subExpressions() { return list(e1,e2); }
-					
 					@Override public String op() { return op; }
-
-					@Override
-					public boolean equals(final Object that)
+					@Override public boolean equals(final Object that)
 					{
 						if (this == that) return true;
 						if (that == null) return false;
@@ -184,8 +170,8 @@ public final class ExprBuilder
 								listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
 					}
 
-					@Override
-					public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
+					@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
+					@Override public String toString() { return "(" + e1.toString() + ") " + op() + " (" + e2.toString() + ")"; }
 					
 					
 				};
@@ -215,13 +201,9 @@ public final class ExprBuilder
 				{
 					final List<Expr> args = List.list(_args);
 					@Override public String functionName() { return funcName; }
-
 					@Override public List<Expr> args() { return args; }
-
 					@Override public CellType type() { return type; }
-
-					@Override
-					public boolean equals(Object that)
+					@Override public boolean equals(Object that)
 					{
 						if (this == that) return true;
 						if (that == null) return false;
@@ -231,6 +213,12 @@ public final class ExprBuilder
 					}
 
 					@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
+					@Override public String toString()
+					{
+						final String argsString = args().foldRight(new F2<Expr,String,String>() {
+							@Override public String f(Expr e, String accum)  { return e.toString() + "," + accum; }}, "");
+						return functionName() + "(" + argsString.substring(0, argsString.length()-1) + ")";
+					}
 					
 					
 					
@@ -270,6 +258,16 @@ public final class ExprBuilder
 					@Override public VarExpr var() { return varExpr;}
 					@Override public Expr expression() { return expr; }
 					@Override public CellType type() { return expression().type(); }
+					@Override public boolean equals(Object that)
+					{
+						final P2<Boolean,Binding> genResult = genericEqualAndCast(this, that, Binding.class);
+						if (!genResult._1()) return false;
+						return equal(var(), genResult._2().var()) && equal(expression(),genResult._2().expression());
+					}
+					
+					@Override public int hashCode() { return hash(var()) + hash(expression()); }
+					@Override public String toString() { return var().toString() + " = " + expression().toString(); }
+					
 				};
 			}
 			
@@ -283,6 +281,21 @@ public final class ExprBuilder
 		{
 			@Override public List<Expr> subExpressions() { return list(expressions); }
 			@Override public CellType type() { return subExpressions().last().type(); }
+			@Override public boolean equals(Object that)
+			{
+				final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
+				if (!genResult._1()) return false;
+				return listsEqual(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
+			}
+			
+			@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
+			@Override public String toString()
+			{
+				return subExpressions().foldRight(new F2<Expr,String,String>() {
+					@Override public String f(Expr a, String accum) { return a.toString() + ";\n" + accum; }}, "");
+			}
+			
+			
 		};
 	}
 

@@ -7,6 +7,7 @@ import static java.util.Objects.hash;
 import static ls.tools.fj.Util.listsEqual;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Param;
+import ls.tools.fj.Util;
 import fj.F;
 import fj.F2;
 import fj.P2;
@@ -21,6 +22,15 @@ final class FunctionImpl implements Function
 		ParamImpl(final P2<String, CellType> a) { this.name = a._1(); this.type = a._2(); }
 		@Override public String name() { return this.name;}
 		@Override public CellType type() { return this.type; }
+		@Override public boolean equals(Object that)
+		{
+			final P2<Boolean,ParamImpl> gr = Util.genericEqualAndCast(this, that, ParamImpl.class);
+			return gr._1() && equal(name(),gr._2().name()) && equal(type(),gr._2().type());
+		}
+		
+		@Override public int hashCode() { return hash(name()) + hash(type()); }
+		@Override public String toString() { return name() + " : " + type().toString(); }
+		
 	}
 
 
@@ -81,18 +91,17 @@ final class FunctionImpl implements Function
 	
 	@Override public int hashCode() { return hash(name(),body(),returnType()) + deepHashCode(parameters().toArray().array()); }
 
-
-	@Override
-	public String toString()
+	@Override public String toString()
 	{
-		return name() + ": " + paramsToString() + " => " + returnType().toString();
+		final String s = paramsToString();
+		return name() + ": " + s.substring(0,s.length()-1) + " => " + returnType().toString();
 	}
 
 
 	private String paramsToString()
 	{
 		return parameters().foldRight(new F2<Param,String,String>() {
-			@Override public String f(Param param, String accum) { return param.name() + " : " + param.type() + "," + accum; }
+			@Override public String f(Param param, String accum) { return param.toString() + "," + accum; }
 		}, "");
 		
 	}
