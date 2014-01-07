@@ -2,6 +2,8 @@ package ls.tools.excel;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static fj.Show.listShow;
+import static fj.Show.showS;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.fj.Util.listsEqual;
@@ -33,11 +35,13 @@ final class FunctionImpl implements Function
 		
 	}
 
+	private static final F<Param,String> PARAM_TO_STRING = new F<Param,String>() {@Override public String f(Param p) { return p.toString(); }};
 
 	private final String name;
 	private final List<Param> params;
 	private final Expr body;
 	private final CellType type;
+	
 
 	static Function create(final String _actionName, final List<P2<String,CellType>> _paramList, final Expr _body, final CellType ret) { return new FunctionImpl(_actionName,_paramList, _body, ret); }
 	
@@ -93,20 +97,7 @@ final class FunctionImpl implements Function
 
 	@Override public String toString()
 	{
-		final String s = paramsToString();
-		return name() + ": " + s.substring(0,s.length()-1) + " => " + returnType().toString();
+		return name() + ": " + listShow(showS(PARAM_TO_STRING)).showS(parameters()) + " => " + returnType().toString();
 	}
 
-
-	private String paramsToString()
-	{
-		return parameters().foldRight(new F2<Param,String,String>() {
-			@Override public String f(Param param, String accum) { return param.toString() + "," + accum; }
-		}, "");
-		
-	}
-
-	
-	
-	
 }

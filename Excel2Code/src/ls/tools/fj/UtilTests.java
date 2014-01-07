@@ -1,11 +1,13 @@
 package ls.tools.fj;
 
+import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 import fj.F2;
+import fj.P2;
 import fj.data.List;
 
 public class UtilTests
@@ -34,5 +36,13 @@ public class UtilTests
 			{
 				return a.intValue() == b.intValue();
 			}}));
+	}
+	
+	@Test
+	public void genericEqualShouldReturnTrueAndNullForTwoNulls() throws Exception
+	{
+		final P2<Boolean,Object> res = genericEqualAndCast(null, null, Object.class);
+		assertTrue(res._1());
+		assertNull(res._2());
 	}
 }
