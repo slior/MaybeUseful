@@ -37,4 +37,6 @@ public final class Util
 		if (!(cls.isAssignableFrom(b.getClass()))) return pair(false,null);
 		return pair(true,(T)b);
 	}
+
+	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
 }

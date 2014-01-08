@@ -8,6 +8,7 @@ import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.CellType.fromSSCellType;
+import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static org.apache.poi.ss.formula.FormulaParser.parse;
 
@@ -32,7 +33,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import fj.F;
-import fj.P2;
 import fj.data.List;
 import fj.data.Option;
 
@@ -124,39 +124,22 @@ public final class FormulaConverter
 		return sheet.getRow(cr.getRow()).getCell(cr.getCol());
 	}
 	
-	private List<P2<String, CellType>> paramList()
+	private List<Param> paramList()
 	{
-		final List<P2<String,CellType>> ret = unresolvedSymbols
+		final List<Param> ret = unresolvedSymbols
 				//Remove duplicates
 				.nub(equal(new F<RefPtg, F<RefPtg,Boolean>>() {
 					@Override public F<RefPtg, Boolean> f(final RefPtg r1) {
-						return new F<RefPtg, Boolean>() {
-							@Override public Boolean f(final RefPtg r2) { return r1.toFormulaString().equals(r2.toFormulaString()); }
-						};
+						return new F<RefPtg, Boolean>() { @Override public Boolean f(final RefPtg r2) { return r1.toFormulaString().equals(r2.toFormulaString()); } };
 					}
 				})) 
 				//Filter out all the formula references
-				.filter(new F<RefPtg,Boolean>() {
-					@Override public Boolean f(RefPtg a) { return typeOfCellReferencedBy(a) != CellType.FORMULA; }
-				})
+				.filter(new F<RefPtg,Boolean>() { @Override public Boolean f(RefPtg a) { return typeOfCellReferencedBy(a) != CellType.FORMULA; } })
 				//Convert references to param declarations
-				.map(new F<RefPtg,P2<String,CellType>>() {
-						@Override public P2<String,CellType> f(final RefPtg token)
-						{
-							return param(token.toFormulaString(),typeOfCellReferencedBy(token));
-						}});
+				.map(new F<RefPtg,Param>() { @Override public Param f(final RefPtg token) { return param(token.toFormulaString(),typeOfCellReferencedBy(token)); }});
 		return ret;
 	}
 	
-	static final P2<String,CellType> param(final String name, final CellType type)
-	{
-		return new P2<String,CellType>() 
-		{
-			@Override public String _1() { return name; }
-			@Override public CellType _2() { return type; }
-		};
-	}
-
 	private void handleMultOp(final MultiplyPtg token)
 	{
 		checkState(resultStack.size() >= 2,"Must have at least 2 operands for multiplication");

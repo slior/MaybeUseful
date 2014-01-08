@@ -4,7 +4,7 @@ package ls.tools.excel;
 import static fj.data.List.list;
 import static junit.framework.Assert.assertTrue;
 import static ls.tools.excel.CellType.NUMERIC;
-import static ls.tools.excel.FormulaConverter.param;
+import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.fj.Util.listsEqual;
 
@@ -58,7 +58,6 @@ public final class FormulaConverterTest
 	public void simple2CellMultiplication() 
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, MULT_FUNC_NAME);
-		@SuppressWarnings("unchecked")
 		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
 						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
@@ -74,7 +73,7 @@ public final class FormulaConverterTest
 	public void simpleScalarCellMultiplication() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
-		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
+		final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
 																				e().sequence(
 																						e().binOp(MULT_OP).ofType(NUMERIC)
 																						.andOperands(
@@ -87,7 +86,7 @@ public final class FormulaConverterTest
 	public void singleParamUsedTwice() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
-		@SuppressWarnings("unchecked") final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
+		final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
 																				e().sequence(
 																						e().binOp(MULT_OP).ofType(NUMERIC)
 																							.andOperands(
@@ -102,7 +101,6 @@ public final class FormulaConverterTest
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE);
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
 		final VarExpr d3Var = e().var("D3").ofType(NUMERIC);
-		@SuppressWarnings("unchecked")
 		final List<Function> expectedFunctions = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
 																					e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
 														  FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),

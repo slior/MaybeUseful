@@ -7,8 +7,10 @@ import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
+import static ls.tools.fj.Util.notEmpty;
 import ls.tools.excel.CellType;
 import ls.tools.excel.Function;
+import ls.tools.fj.Util;
 import fj.F2;
 import fj.P2;
 import fj.data.List;
@@ -36,8 +38,6 @@ public final class ExprBuilder
 	
 	private static final ExprBuilder mainBuilderInstance = new ExprBuilder(); 
 	public static ExprBuilder e() { return mainBuilderInstance; } //we can it this way since it doesn't hold any state
-	
-	private static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
 	
 	public interface VarBuilder { VarExpr ofType(CellType _t); }
 		
@@ -134,7 +134,7 @@ public final class ExprBuilder
 	 */
 	public BinOpBuilder binOp(final String _op)
 	{
-		checkArgument(notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
+		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
 		return new BinOpBuilder()
 		{
 			final String op = _op;
@@ -190,7 +190,7 @@ public final class ExprBuilder
 	
 	public FunctionInvocationBuilder invocationOf(final String funcName)
 	{
-		checkArgument(notEmpty(funcName),"Function name can't be empty");
+		checkArgument(Util.notEmpty(funcName),"Function name can't be empty");
 		return new FunctionInvocationBuilder()
 		{
 			private CellType type;

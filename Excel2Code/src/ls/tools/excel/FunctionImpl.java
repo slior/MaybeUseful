@@ -1,12 +1,14 @@
 package ls.tools.excel;
 
 import static com.google.common.base.Objects.equal;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static fj.Show.listShow;
 import static fj.Show.showS;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.fj.Util.listsEqual;
+import static ls.tools.fj.Util.notEmpty;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Param;
 import ls.tools.fj.Util;
@@ -17,11 +19,21 @@ import fj.data.List;
 
 final class FunctionImpl implements Function
 {
+	
 	private static final class ParamImpl implements Param
 	{
 		private final String name;
 		private final CellType type;
-		ParamImpl(final P2<String, CellType> a) { this.name = a._1(); this.type = a._2(); }
+		ParamImpl(final P2<String, CellType> a) { this(a._1(),a._2()); }
+		
+		ParamImpl(final String name, final CellType type)
+		{
+			checkArgument(notEmpty(name),"Parameter name can't be empty");
+			checkArgument(type != null,"Can't have a null type for parameter");
+			this.name = name;
+			this.type = type;
+		}
+		
 		@Override public String name() { return this.name;}
 		@Override public CellType type() { return this.type; }
 		@Override public boolean equals(Object that)
@@ -34,8 +46,15 @@ final class FunctionImpl implements Function
 		@Override public String toString() { return name() + " : " + type().toString(); }
 		
 	}
-
+	
+	static Param param(final String name, final CellType type) { return new ParamImpl(name,type); }
+	
+	private static final class NameTypePairToParam extends F<P2<String, CellType>, Param> { @Override public Param f(P2<String, CellType> a) { return new ParamImpl(a); } }
+	static final F<P2<String, CellType>, Param> NAME_TYPE_TO_PARAM = new NameTypePairToParam();
 	private static final F<Param,String> PARAM_TO_STRING = new F<Param,String>() {@Override public String f(Param p) { return p.toString(); }};
+	
+
+	
 
 	private final String name;
 	private final List<Param> params;
@@ -43,19 +62,19 @@ final class FunctionImpl implements Function
 	private final CellType type;
 	
 
-	static Function create(final String _actionName, final List<P2<String,CellType>> _paramList, final Expr _body, final CellType ret) { return new FunctionImpl(_actionName,_paramList, _body, ret); }
+	static Function create(final String _actionName, final List<Param> params, final Expr _body, final CellType ret) { return new FunctionImpl(_actionName,params, _body, ret); }
 	
 	
-	private FunctionImpl(final String _actionName, final List<P2<String,CellType>> _paramList, final Expr _body)
+	private FunctionImpl(final String _actionName, final List<Param> _paramList, final Expr _body)
 	{
 		this(_actionName,_paramList,_body,_body.type());
 	}
 	
-	private FunctionImpl(final String _actionName, final List<P2<String,CellType>> _paramList, final Expr _body, final CellType ret)
+	private FunctionImpl(final String _actionName, final List<Param> _paramList, final Expr _body, final CellType ret)
 	{
 		this.name = checkNotNull(_actionName);
 		
-		this.params = checkNotNull(_paramList).map(new F<P2<String,CellType>, Param>() { @Override public Param f(P2<String, CellType> a) { return new ParamImpl(a); } });
+		this.params = checkNotNull(_paramList);
 		this.body = checkNotNull(_body);
 		this.type = checkNotNull(ret);
 	}
