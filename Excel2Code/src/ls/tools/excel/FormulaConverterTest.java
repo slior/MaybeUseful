@@ -73,12 +73,12 @@ public final class FormulaConverterTest
 	public void simpleScalarCellMultiplication() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
+		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
 		final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
-																				e().sequence(
-																						e().binOp(MULT_OP).ofType(NUMERIC)
-																						.andOperands(
-																								e().var(B3).ofType(NUMERIC), 
-																								e().literal("2").ofType(NUMERIC))), NUMERIC));
+																	e().sequence(
+																			e().bindingOf(localVar0).to(e().literal("2").ofType(NUMERIC)),
+																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)), 
+																	NUMERIC));
 		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 	

@@ -14,6 +14,7 @@ import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 import java.util.Stack;
 
+import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
@@ -46,6 +47,7 @@ public final class FormulaConverter
 	private FormulaParsingWorkbook fpwb;
 	private List<Function> generatedFunctions = nil();
 	private List<Expr> bodySeq = nil();
+	private int localVarCount = 0;
 	
 	List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
@@ -113,8 +115,14 @@ public final class FormulaConverter
 	
 	private void handleIntLiteral(final IntPtg token)
 	{
-		resultStack.push(e().literal(token.toFormulaString()).ofType(NUMERIC));
+		final Binding b = e().bindingOf(e().var(newLocalVarName()).ofType(NUMERIC)).to(e().literal(token.toFormulaString()).ofType(NUMERIC));
+		addToBody(b);
+//		resultStack.push(b.var());
 	}
+
+
+	//Not thread safe - does it need to be?
+	private String newLocalVarName() { return "_" + (localVarCount ++); }
 
 
 	private Cell cell(final String cellFormula)
@@ -126,7 +134,7 @@ public final class FormulaConverter
 	
 	private List<Param> paramList()
 	{
-		final List<Param> ret = unresolvedSymbols
+		return unresolvedSymbols
 				//Remove duplicates
 				.nub(equal(new F<RefPtg, F<RefPtg,Boolean>>() {
 					@Override public F<RefPtg, Boolean> f(final RefPtg r1) {
@@ -137,26 +145,27 @@ public final class FormulaConverter
 				.filter(new F<RefPtg,Boolean>() { @Override public Boolean f(RefPtg a) { return typeOfCellReferencedBy(a) != CellType.FORMULA; } })
 				//Convert references to param declarations
 				.map(new F<RefPtg,Param>() { @Override public Param f(final RefPtg token) { return param(token.toFormulaString(),typeOfCellReferencedBy(token)); }});
-		return ret;
 	}
 	
 	private void handleMultOp(final MultiplyPtg token)
 	{
-		checkState(resultStack.size() >= 2,"Must have at least 2 operands for multiplication");
-		final Expr op2 = resultStack.pop();
-		final Expr op1 = resultStack.pop();
-		resultStack.push(addToBody(e().binOp("*").ofType(NUMERIC).andOperands(op1,op2)));
+//		checkState(resultStack.size() >= 2,"Must have at least 2 operands for multiplication");
+//		final Expr op2 = resultStack.pop();
+//		final Expr op1 = resultStack.pop();
+//		resultStack.push(addToBody(e().binOp("*").ofType(NUMERIC).andOperands(op1,op2)));
 		
 	}
 
 	private void handleReference(final RefPtg token)
 	{
 		if (typeOfCellReferencedBy(token).equals(FORMULA))
-			resultStack.push(generateFunctionAndInvocation(token));
+//			resultStack.push(generateFunctionAndInvocation(token));
+			addToBody(generateFunctionAndInvocation(token));
 		else
 		{
 			unresolvedSymbols = unresolvedSymbols.cons(token);
-			resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
+//			resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
+			addToBody(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
 		}
 	}
 
