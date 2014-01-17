@@ -100,27 +100,70 @@ public final class FormulaConverter
 		//tokens are in RPN.
 		for (Ptg token : tokens)
 		{
-			if (token instanceof RefPtg)
-				handleReference((RefPtg)token);
-			else if (token instanceof MultiplyPtg)
-				handleMultOp((MultiplyPtg)token);
-			else if (token instanceof IntPtg)
-				handleIntLiteral((IntPtg)token);
+			if (isLiteral(token))
+			{
+				final Binding b = createBindingToLiteral(token);
+				addToBody(b);
+				resultStack.push(b.var());
+			}
+			else if (isBinaryOp(token))
+			{
+				if (resultStack.size() < 2) throw new IllegalStateException("Binary operator must have at least two operands.");
+				final Expr op2 = resultStack.pop();
+				final Expr op1 = resultStack.pop();
+				resultStack.push(addToBody(e().binOp(op(token)).ofType(NUMERIC).andOperands(op1,op2)));
+			}
+			else if (isFuncCall(token))
+			{
+				final Binding b = createBindingToFunctionResult((RefPtg) token);
+				addToBody(b);
+				resultStack.push(b.var());
+			}
+			else if (isCellReference(token))
+			{
+				unresolvedSymbols = unresolvedSymbols.cons((RefPtg)token);
+				resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy((RefPtg)token)));
+			}
 		}
+		
 	}
+
+
+	private Binding createBindingToLiteral(Ptg token)
+	{
+		return e().bindingOf(e().var(newLocalVarName()).ofType(NUMERIC)).to(e().literal(token.toFormulaString()).ofType(NUMERIC));
+	}
+
+	
+	private boolean isCellReference(Ptg token)
+	{
+		if (!(token instanceof RefPtg)) return false;
+		return !typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
+	}
+
+
+	private String op(final Ptg token)
+	{
+		if (token instanceof MultiplyPtg) return "*";
+		else throw new IllegalArgumentException("Can't resolve operator for token: " + token.toFormulaString());
+	}
+
+
+	private boolean isFuncCall(Ptg token)
+	{
+		if (!(token instanceof RefPtg)) return false;
+		return typeOfCellReferencedBy((RefPtg)token).equals(FORMULA); 
+	}
+
+	private boolean isBinaryOp(final Ptg token) { return token instanceof MultiplyPtg; }
+
+	private boolean isLiteral(final Ptg token) { return token instanceof IntPtg; }
+
 
 	private void clearBodySeq() { bodySeq = nil(); }
 	private void clearResultStack() { resultStack.clear(); }
 	private void clearGeneratedFunctions() { generatedFunctions = nil(); }
 	
-	private void handleIntLiteral(final IntPtg token)
-	{
-		final Binding b = e().bindingOf(e().var(newLocalVarName()).ofType(NUMERIC)).to(e().literal(token.toFormulaString()).ofType(NUMERIC));
-		addToBody(b);
-//		resultStack.push(b.var());
-	}
-
-
 	//Not thread safe - does it need to be?
 	private String newLocalVarName() { return "_" + (localVarCount ++); }
 
@@ -146,29 +189,6 @@ public final class FormulaConverter
 				//Convert references to param declarations
 				.map(new F<RefPtg,Param>() { @Override public Param f(final RefPtg token) { return param(token.toFormulaString(),typeOfCellReferencedBy(token)); }});
 	}
-	
-	private void handleMultOp(final MultiplyPtg token)
-	{
-//		checkState(resultStack.size() >= 2,"Must have at least 2 operands for multiplication");
-//		final Expr op2 = resultStack.pop();
-//		final Expr op1 = resultStack.pop();
-//		resultStack.push(addToBody(e().binOp("*").ofType(NUMERIC).andOperands(op1,op2)));
-		
-	}
-
-	private void handleReference(final RefPtg token)
-	{
-		if (typeOfCellReferencedBy(token).equals(FORMULA))
-//			resultStack.push(generateFunctionAndInvocation(token));
-			addToBody(generateFunctionAndInvocation(token));
-		else
-		{
-			unresolvedSymbols = unresolvedSymbols.cons(token);
-//			resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
-			addToBody(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy(token)));
-		}
-	}
-
 
 	/**
 	 * Given the token that points to a formula cell, generate:
@@ -177,12 +197,12 @@ public final class FormulaConverter
 	 * <li>The call to that formula</li>
 	 * <li>A binding of a new variable to the result of the function invocation</li>
 	 * </ol> 
-	 * It returns the newly created variable, bound to the result of the generated function call.
+	 * It returns the newly created binding of a new variable, bound to the result of the generated function call.
 	 * This also updated {@link #generatedFunctions} and {@link #bodySeq}, with the new functions and statements.
 	 * @param token The token referencing a formula cell.
-	 * @return The newly created variable, bound to the result of the function call, from the newly generated function.
+	 * @return The newly created binding expression, with the new variable bound to the result of the function call, from the newly generated function.
 	 */
-	private VarExpr generateFunctionAndInvocation(final RefPtg token)
+	private Binding createBindingToFunctionResult(final RefPtg token)
 	{
 		final Cell c = cell(token.toFormulaString());
 		final Option<Name> n = nameForCell(c);
@@ -196,8 +216,7 @@ public final class FormulaConverter
 				new F<Param,VarExpr>() { @Override public VarExpr f(final Param a) { return e().var(a.name()).ofType(a.type()); }});
 		
 		final VarExpr newVar = var(token.toFormulaString(), f.last().returnType());
-		addToBody(e().bindingOf(newVar).to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class))));
-		return newVar;
+		return e().bindingOf(newVar).to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
 	}
 
 
