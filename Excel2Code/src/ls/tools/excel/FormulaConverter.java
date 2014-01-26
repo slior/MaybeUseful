@@ -127,6 +127,15 @@ public final class FormulaConverter
 				else //it's a built-in function
 				{
 					final Function f = builtInFunction(((FuncPtg)token).getName());
+					final List<VarExpr> args = f.parameters().map( //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
+							new F<Param,VarExpr>() { @Override public VarExpr f(final Param a) { return e().var(a.name()).ofType(a.type()); }});
+					
+					final VarExpr newVar = var(token.toFormulaString(), f.returnType());
+					final Binding b = e().bindingOf(newVar).to(e().invocationOf(f).withArgs(args.toArray().array(VarExpr[].class)));
+					
+					addToBody(b);
+					resultStack.push(b.var());
+					
 				}
 			}
 			else if (isCellReference(token))
@@ -143,7 +152,9 @@ public final class FormulaConverter
 	{
 		checkArgument(funcName != null, "Built in function name can't be null when searching for its metadata");
 		final FunctionMetadata fmd = FunctionMetadataRegistry.getFunctionByName(funcName);
-//		FunctionImpl.create(funcName,)
+		if (fmd == null) throw new IllegalArgumentException("Couldn't find built in function named: " + funcName);
+		
+		FunctionImpl.create(funcName,)
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Method builtInFunction is not implemented yet in FormulaConverter");
 	}
