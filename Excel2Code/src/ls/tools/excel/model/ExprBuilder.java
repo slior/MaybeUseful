@@ -37,7 +37,7 @@ public final class ExprBuilder
 	};
 	
 	private static final ExprBuilder mainBuilderInstance = new ExprBuilder(); 
-	public static ExprBuilder e() { return mainBuilderInstance; } //we can it this way since it doesn't hold any state
+	public static ExprBuilder e() { return mainBuilderInstance; } //we can do it this way since it doesn't hold any state
 	
 	public interface VarBuilder { VarExpr ofType(CellType _t); }
 		
@@ -279,7 +279,7 @@ public final class ExprBuilder
 		private final List<Expr> expressions;
 		CompositeSequence(final List<Expr> _exprs)
 		{
-			checkArgument(_exprs != null && _exprs.length() > 0,"Can't have empty expression list for sequence");
+			checkArgument(_exprs != null,"Can't have a null expression list for sequence");
 			this.expressions = _exprs;
 		}
 		@Override public List<Expr> subExpressions() { return expressions; }

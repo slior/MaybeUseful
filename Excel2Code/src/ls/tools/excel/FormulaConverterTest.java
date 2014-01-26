@@ -13,6 +13,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import ls.tools.excel.model.CompositeExpr;
+import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
 
@@ -38,6 +40,8 @@ public final class FormulaConverterTest
 	private static final String TIMES2 = "times2";
 	private static final String SHEET1 = "Sheet1";
 	private static final String MULT_FUNC_NAME = "mult";
+	private static final CompositeExpr NO_BODY = e().sequence();
+	private static final String SQRT = "SQRT";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
 	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { 
@@ -46,7 +50,6 @@ public final class FormulaConverterTest
 			if (a == null) return b == null;
 			final boolean ret = a.equals(b);
 			return ret;
-//			return equal(a, b); 
 		} 
 	};
 	
@@ -120,12 +123,21 @@ public final class FormulaConverterTest
 	
 	
 	@Test
-	@Ignore
 	public void builtInFunctionOverAnotherFormula() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE_SQRT);
-		final List<Param> noParams = List.nil();
-//		final Function sqrt = FunctionImpl.create(CUBE_SQRT, noParams, e().sequence(e().bindingOf(e3).to(e().invocationOf(SQUAR))), NUMERIC);
+		final VarExpr b3 = e().var(B3).ofType(NUMERIC);
+		final VarExpr e3 = e().var("E3").ofType(NUMERIC);
+		
+		final Function lastFunc = FunctionImpl.create(CUBE_SQRT, list(param(B3,NUMERIC)),
+												e().sequence(
+														e().bindingOf(e3).to(e().invocationOf(CUBE).withArgs(b3)),
+														e().invocationOf(SQRT).withArgs(e3))
+												, NUMERIC);
+		final List<Function> expected = cubeExpectedFunctions().snoc(lastFunc);
+		
+		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		
 		
 		 
 	}

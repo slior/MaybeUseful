@@ -1,5 +1,6 @@
 package ls.tools.excel;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -8,7 +9,11 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.poi.ss.formula.FormulaParser;
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
+import org.apache.poi.ss.formula.FormulaType;
+import org.apache.poi.ss.formula.ptg.FuncPtg;
+import org.apache.poi.ss.formula.ptg.Ptg;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -23,6 +28,7 @@ import org.junit.Test;
 public final class POIInterfaceTests 
 {
 
+	private static final int RESOLVE_NAME_IN_CONTAINING_SHEET = -1;
 	private static final String SHEET1 = "Sheet1";
 	private static final String TEST_FILENAME = "test.xlsx";
 	private static final String MULT_NAMED_RANGE = "mult";
@@ -108,10 +114,16 @@ public final class POIInterfaceTests
 	{
 		final Sheet s = wb.getSheet(SHEET1);
 		final Name n = wb.getName(CUBE_NAMED_RANGE);
-		final CellReference cr = new CellReference(n.getRefersToFormula());
-		final Cell c = s.getRow(cr.getRow()).getCell(cr.getCol());
+		final Cell c = cellForNameInSheet(s, n);
 		assertNotNull(c);
 		
+	}
+
+	private Cell cellForNameInSheet(final Sheet s, final Name n)
+	{
+		final CellReference cr = new CellReference(n.getRefersToFormula());
+		final Cell c = s.getRow(cr.getRow()).getCell(cr.getCol());
+		return c;
 	}
 	
 	@Test
@@ -119,8 +131,7 @@ public final class POIInterfaceTests
 	{
 		final Sheet s = wb.getSheet(SHEET1);
 		final Name n = wb.getName(CUBE_NAMED_RANGE);
-		final CellReference cr = new CellReference(n.getRefersToFormula());
-		final Cell c = s.getRow(cr.getRow()).getCell(cr.getCol());
+		final Cell c = cellForNameInSheet(s, n);
 		assertEquals(Cell.CELL_TYPE_FORMULA, c.getCellType());
 	}
 	
@@ -131,5 +142,20 @@ public final class POIInterfaceTests
 		assertNotNull(fpwb);
 	}
 	
+	
+	@Test
+	public void identifyingBuiltInFunctionsByPtgClass() throws Exception
+	{
+		final Cell c = cellForNameInSheet(wb.getSheet(SHEET1), wb.getName(CUBE_SQRT_NAMED_RANGE));
+		final FormulaParsingWorkbook fpwb = XSSFEvaluationWorkbook.create((XSSFWorkbook)wb);
+		final Ptg[] tokens = FormulaParser.parse(c.getCellFormula(), fpwb, FormulaType.CELL, RESOLVE_NAME_IN_CONTAINING_SHEET);
+		
+		final Ptg funcToken = tokens[1];
+		assertTrue(funcToken instanceof FuncPtg); //is built in function
+		final FuncPtg ftok = (FuncPtg)funcToken;
+		assertEquals("SQRT",ftok.getName());
+		
+		
+	}
 }
 

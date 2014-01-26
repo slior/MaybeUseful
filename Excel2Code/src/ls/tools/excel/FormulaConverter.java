@@ -21,6 +21,9 @@ import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
+import org.apache.poi.ss.formula.function.FunctionMetadata;
+import org.apache.poi.ss.formula.function.FunctionMetadataRegistry;
+import org.apache.poi.ss.formula.ptg.FuncPtg;
 import org.apache.poi.ss.formula.ptg.IntPtg;
 import org.apache.poi.ss.formula.ptg.MultiplyPtg;
 import org.apache.poi.ss.formula.ptg.Ptg;
@@ -115,9 +118,16 @@ public final class FormulaConverter
 			}
 			else if (isFuncCall(token))
 			{
-				final Binding b = createBindingToFunctionResult((RefPtg) token);
-				addToBody(b);
-				resultStack.push(b.var());
+				if (!isBuiltInFunction(token))
+				{
+					final Binding b = createBindingToFunctionResult((RefPtg) token);
+					addToBody(b);
+					resultStack.push(b.var());
+				}
+				else //it's a built-in function
+				{
+					final Function f = builtInFunction(((FuncPtg)token).getName());
+				}
 			}
 			else if (isCellReference(token))
 			{
@@ -126,6 +136,23 @@ public final class FormulaConverter
 			}
 		}
 		
+	}
+
+
+	private Function builtInFunction(final String funcName)
+	{
+		checkArgument(funcName != null, "Built in function name can't be null when searching for its metadata");
+		final FunctionMetadata fmd = FunctionMetadataRegistry.getFunctionByName(funcName);
+//		FunctionImpl.create(funcName,)
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Method builtInFunction is not implemented yet in FormulaConverter");
+	}
+
+
+	private boolean isBuiltInFunction(final Ptg token)
+	{
+		checkArgument(token != null,"Can't answer for a null token - is null a built in function?");
+		return token instanceof FuncPtg;
 	}
 
 
