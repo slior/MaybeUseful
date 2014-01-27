@@ -2,6 +2,7 @@ package ls.tools.excel;
 
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static fj.Equal.equal;
 import static fj.data.List.nil;
@@ -16,13 +17,12 @@ import java.util.Stack;
 
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.FunctionExpr;
 import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
-import org.apache.poi.ss.formula.function.FunctionMetadata;
-import org.apache.poi.ss.formula.function.FunctionMetadataRegistry;
 import org.apache.poi.ss.formula.ptg.FuncPtg;
 import org.apache.poi.ss.formula.ptg.IntPtg;
 import org.apache.poi.ss.formula.ptg.MultiplyPtg;
@@ -95,7 +95,11 @@ public final class FormulaConverter
 
 	/**
 	 * Given a list of tokens, in reverse polish notation, go over all of them, and create necessary expressions for all of them.
-	 * This will update the {@link #bodySeq} expression sequence, and possibly the {@link #generatedFunctions} list, if any other functions are created.
+	 * This will update the {@link #bodySeq body} expression sequence, and possibly the {@link #generatedFunctions} list, if any other functions are created.
+	 * <p>
+	 * This is basically the "heart" of the conversion process. All token are converted to expressions, pushed to a {@link #resultStack stack}, and popped when necessary.
+	 * all the stack handling (should) take(s) place in this function alone.
+	 * </p>
 	 * @param tokens The formula tokens to convert from.
 	 */
 	private void generateExpressionsForTokens(final Ptg[] tokens)
@@ -118,25 +122,26 @@ public final class FormulaConverter
 			}
 			else if (isFuncCall(token))
 			{
-				if (!isBuiltInFunction(token))
-				{
-					final Binding b = createBindingToFunctionResult((RefPtg) token);
-					addToBody(b);
-					resultStack.push(b.var());
-				}
-				else //it's a built-in function
-				{
-					final Function f = builtInFunction(((FuncPtg)token).getName());
-					final List<VarExpr> args = f.parameters().map( //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
-							new F<Param,VarExpr>() { @Override public VarExpr f(final Param a) { return e().var(a.name()).ofType(a.type()); }});
-					
-					final VarExpr newVar = var(token.toFormulaString(), f.returnType());
-					final Binding b = e().bindingOf(newVar).to(e().invocationOf(f).withArgs(args.toArray().array(VarExpr[].class)));
-					
-					addToBody(b);
-					resultStack.push(b.var());
-					
-				}
+				final Binding b = createBindingToFunctionResult((RefPtg) token);
+				addToBody(b);
+				resultStack.push(b.var());
+			}
+			else if (isBuiltInFunction(token))
+			{
+				final Function builtIn = builtInFunction(((FuncPtg)token).getName());
+				final List<VarExpr> args =  builtIn.parameters().map(new F<Param,VarExpr>() {
+					@Override
+					public VarExpr f(final Param a)
+					{
+						final Expr e = resultStack.pop(); //note: this changes state of algorithm, the stack is popped.
+						checkState(e instanceof VarExpr, "Arguments to built-in function must be variables. Found another expression on the stack: " + e.toString());
+						return (VarExpr)e;
+					}});
+				
+				//TODO: produce a local variable and binding for nested function calls?
+				final FunctionExpr fe = e().invocationOf(builtIn).withArgs(args.toArray().array(VarExpr[].class));
+				addToBody(fe);
+				resultStack.push(fe);
 			}
 			else if (isCellReference(token))
 			{
@@ -151,12 +156,8 @@ public final class FormulaConverter
 	private Function builtInFunction(final String funcName)
 	{
 		checkArgument(funcName != null, "Built in function name can't be null when searching for its metadata");
-		final FunctionMetadata fmd = FunctionMetadataRegistry.getFunctionByName(funcName);
-		if (fmd == null) throw new IllegalArgumentException("Couldn't find built in function named: " + funcName);
-		
-		FunctionImpl.create(funcName,)
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Method builtInFunction is not implemented yet in FormulaConverter");
+		final Function f = BuiltInFunction.valueOf(funcName);
+		return checkNotNull(f, "Couldn't find built in function with name = " + funcName);
 	}
 
 

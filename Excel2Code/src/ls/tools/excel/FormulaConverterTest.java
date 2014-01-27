@@ -7,22 +7,17 @@ import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.fj.Util.listsEqual;
-import static org.junit.Assert.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import ls.tools.excel.model.CompositeExpr;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import fj.F2;
@@ -40,8 +35,6 @@ public final class FormulaConverterTest
 	private static final String TIMES2 = "times2";
 	private static final String SHEET1 = "Sheet1";
 	private static final String MULT_FUNC_NAME = "mult";
-	private static final CompositeExpr NO_BODY = e().sequence();
-	private static final String SQRT = "SQRT";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
 	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { 
@@ -131,11 +124,10 @@ public final class FormulaConverterTest
 		
 		final Function lastFunc = FunctionImpl.create(CUBE_SQRT, list(param(B3,NUMERIC)),
 												e().sequence(
-														e().bindingOf(e3).to(e().invocationOf(CUBE).withArgs(b3)),
-														e().invocationOf(SQRT).withArgs(e3))
+														e().bindingOf(e3).to(e().invocationOf(CUBE).ofType(NUMERIC).withArgs(b3)),
+														e().invocationOf(BuiltInFunction.SQRT).withArgs(e3))
 												, NUMERIC);
 		final List<Function> expected = cubeExpectedFunctions().snoc(lastFunc);
-		
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 		
 		

@@ -6,7 +6,6 @@ import static ls.tools.excel.FunctionImpl.create;
 import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
 import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.ExprBuilder;
 import ls.tools.excel.model.Param;
 import fj.data.List;
 

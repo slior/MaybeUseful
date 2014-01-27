@@ -62,17 +62,17 @@ final class FunctionImpl implements Function
 	private final CellType type;
 	
 
-	static Function create(final String _actionName, final List<Param> params, final Expr _body, final CellType ret) { return new FunctionImpl(_actionName,params, _body, ret); }
+	static Function create(final String _funcName, final List<Param> params, final Expr _body, final CellType ret) { return new FunctionImpl(_funcName,params, _body, ret); }
 	
 	
-	private FunctionImpl(final String _actionName, final List<Param> _paramList, final Expr _body)
+	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body)
 	{
-		this(_actionName,_paramList,_body,_body.type());
+		this(_funcName,_paramList,_body,_body.type());
 	}
 	
-	private FunctionImpl(final String _actionName, final List<Param> _paramList, final Expr _body, final CellType ret)
+	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body, final CellType ret)
 	{
-		this.name = checkNotNull(_actionName);
+		this.name = checkNotNull(_funcName);
 		
 		this.params = checkNotNull(_paramList);
 		this.body = checkNotNull(_body);
