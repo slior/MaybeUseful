@@ -66,15 +66,8 @@ public final class ExprBuilder
 
 					@Override public int hashCode() { return hash(this.name(),this.type()); }
 					@Override public String toString() { return name() + " : " + type().toString(); }
-					
-					
-
-
 				};
-					
-					
 			}
-
 		};
 	}
 	
@@ -185,7 +178,6 @@ public final class ExprBuilder
 	{
 		FunctionInvocationBuilder ofType(CellType t);
 		FunctionExpr withArgs(Expr... args );
-
 	}
 	
 	public FunctionInvocationBuilder invocationOf(final String funcName)
@@ -219,9 +211,6 @@ public final class ExprBuilder
 							@Override public String f(Expr e, String accum)  { return e.toString() + "," + accum; }}, "");
 						return functionName() + "(" + argsString.substring(0, argsString.length()-1) + ")";
 					}
-					
-					
-					
 				};
 			}
 
@@ -249,7 +238,6 @@ public final class ExprBuilder
 		checkArgument(varExpr != null,"Var can't be null for binding");
 		return new BindBuilder()
 		{
-
 			@Override public Binding to(final Expr expr)
 			{
 				checkArgument(expr != null,"expression can't be null for binding");
@@ -270,7 +258,6 @@ public final class ExprBuilder
 					
 				};
 			}
-			
 		};
 	}
 
@@ -299,14 +286,8 @@ public final class ExprBuilder
 		}
 	}
 	
-	public CompositeExpr sequence(final Expr... expressions)
-	{
-		return new CompositeSequence(list(expressions));
-	}
+	public CompositeExpr sequence(final Expr... expressions) { return new CompositeSequence(list(expressions)); }
 	
-	public CompositeExpr sequence(final List<Expr> expressions)
-	{
-		return new CompositeSequence(expressions);
-	}
+	public CompositeExpr sequence(final List<Expr> expressions) { return new CompositeSequence(expressions); }
 
 }
