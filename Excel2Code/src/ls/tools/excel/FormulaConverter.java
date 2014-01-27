@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static fj.Equal.equal;
+import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
@@ -37,6 +38,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import fj.F;
+import fj.F2;
 import fj.data.List;
 import fj.data.Option;
 
@@ -71,27 +73,39 @@ public final class FormulaConverter
 		
 		final Ptg[] tokens = parse(formula, fpwb, FormulaType.CELL, RESOLVE_NAMES_IN_CONTAINING_SHEET);
 		generateExpressionsForTokens(tokens);
-		return createFunction(name);
+		final List<Function> ret = createFunctionsFor(name);
+		clearState();
+		return ret;
+	}
+
+
+	/**
+	 * Clear the {@link #bodySeq body}, the {@link #resultStack result stack} and {@link #generatedFunctions generated functions} list
+	 */
+	private void clearState()
+	{
+		clearBodySeq();
+		clearResultStack();
+		clearGeneratedFunctions();
 	}
 
 
 	/**
 	 * Create and return the function out of the current state of {@link #bodySeq}.
 	 * It also appends all the {@link #generatedFunctions}, that were recursively generated during the transformation of this function.
-	 * At the end, all the {@link #bodySeq} and {@link #generatedFunctions} and the {@link #resultStack} are cleared.
+	 * <br/>
 	 * The last function created is the last in the list (the one with the given name).
 	 * @param name The name of the function to create.
 	 * @return The newly create function, with any recursively created functions.
 	 */
-	private List<Function> createFunction(final String name)
+	private List<Function> createFunctionsFor(final String name)
 	{
 		final Expr body = e().sequence(bodySeq);
-		clearBodySeq();
-		clearResultStack();
-		final List<Function> ret = generatedFunctions.snoc(FunctionImpl.create(name,paramList(),body,body.type()));
-		clearGeneratedFunctions();
-		return ret;
+		return generatedFunctions.snoc(FunctionImpl.create(name,paramList(),body,body.type()));
 	}
+
+	
+
 
 	/**
 	 * Given a list of tokens, in reverse polish notation, go over all of them, and create necessary expressions for all of them.
@@ -202,6 +216,7 @@ public final class FormulaConverter
 	private void clearBodySeq() { bodySeq = nil(); }
 	private void clearResultStack() { resultStack.clear(); }
 	private void clearGeneratedFunctions() { generatedFunctions = nil(); }
+	private void clearUnresolvedSymbols() { unresolvedSymbols = nil(); }
 	
 	//Not thread safe - does it need to be?
 	private String newLocalVarName() { return "_" + (localVarCount ++); }
@@ -307,6 +322,25 @@ public final class FormulaConverter
 	private CellType typeOfCellReferencedBy(final RefPtg ref)
 	{
 		return fromSSCellType(cell(ref.toFormulaString()).getCellType());
+	}
+
+
+	List<Function> formulasFromNamedCells(final XSSFWorkbook workbook,final String sheetName, final String... names)
+	{
+		final List<Function> initial = nil();
+		return list(names)
+					//convert each name to a list of functions. Note: clears the unresolved symbols after each mapping.
+					.map(new F<String,List<Function>>() { @Override public List<Function> f(final String name) { 
+						final List<Function> ret = formulasFromNamedCell(workbook, sheetName, name); 
+						clearUnresolvedSymbols(); 
+						return ret;
+						}})
+					//concatenate all the results together
+					.foldLeft(new F2<List<Function>,List<Function>,List<Function>>() {@Override public List<Function> f(List<Function> a,List<Function> b) {
+						return a.append(b); 
+						}},initial)
+					//and remove duplicates
+					.nub();
 	}
 
 }

@@ -58,12 +58,17 @@ public final class FormulaConverterTest
 	public void simple2CellMultiplication() 
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, MULT_FUNC_NAME);
-		final List<Function> expected = list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
+		final List<Function> expected = simple2CellMultExpectedResult();
+		assertTrue("Simple 2 cell multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
+	}
+
+	private List<Function> simple2CellMultExpectedResult()
+	{
+		return list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
 						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
 							e().var(B3).ofType(NUMERIC), 
 							e().var(C3).ofType(NUMERIC))), NUMERIC));
-		assertTrue("Simple 2 cell multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	
@@ -73,13 +78,19 @@ public final class FormulaConverterTest
 	public void simpleScalarCellMultiplication() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
+//		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
+		final List<Function> expected = simpleScalarMultExpectedResult();
+		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
+	}
+
+	private List<Function> simpleScalarMultExpectedResult()
+	{
 		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
-		final List<Function> expected = list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
+		return list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
 																	e().sequence(
 																			e().bindingOf(localVar0).to(e().literal("2").ofType(NUMERIC)),
 																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)), 
 																	NUMERIC));
-		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 	
 	@Test
@@ -129,9 +140,17 @@ public final class FormulaConverterTest
 												, NUMERIC);
 		final List<Function> expected = cubeExpectedFunctions().snoc(lastFunc);
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
-		
-		
-		 
+	}
+	
+	@Test
+	public void generatingFunctionsForSetOfNames() throws Exception
+	{
+		final List<Function> result = fc.formulasFromNamedCells(workbook(),SHEET1,MULT_FUNC_NAME,TIMES2);
+		final List<Function> expected = 
+								simple2CellMultExpectedResult()
+								.append(simpleScalarMultExpectedResult())
+								.nub();
+		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 	
 	private XSSFWorkbook workbook() 
