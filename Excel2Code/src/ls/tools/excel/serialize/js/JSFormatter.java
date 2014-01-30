@@ -5,6 +5,7 @@ import static fj.Show.listShow;
 import static fj.Show.showS;
 import static java.lang.String.format;
 import fj.F;
+import fj.F2;
 import fj.Show;
 import fj.data.List;
 import ls.tools.excel.Function;
@@ -30,8 +31,9 @@ public final class JSFormatter implements FunctionFormatter
 
 	private String body(final Function f)
 	{
-		String ret = "{";
-		return ret + "}";
+		final JSSerializingVisitor exprSerializer = new JSSerializingVisitor();
+		f.body().accept(exprSerializer);
+		return exprSerializer.result();
 	}
 
 	private String header(final Function f)
@@ -41,8 +43,14 @@ public final class JSFormatter implements FunctionFormatter
 
 	private String formatParams(final List<Param> parameters)
 	{
-		return listShow(showS(new F<Param,String>() { @Override public String f(Param a) { return a.name(); } }))
-				.showS(parameters);
+//		return listShow(showS(new F<Param,String>() { @Override public String f(Param a) { return a.name(); } }))
+//				.showS(parameters);
+		final String result = parameters.foldLeft(new F2<String,Param,String>() {
+			@Override public String f(String accum, Param p) {
+				return accum + p.name() + ",";
+			}
+		}, "");
+		return result.substring(0,result.length()-1);
 	}
 
 	@Override

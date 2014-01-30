@@ -62,7 +62,7 @@ public final class FormulaConverterTest
 		assertTrue("Simple 2 cell multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 
-	private List<Function> simple2CellMultExpectedResult()
+	public List<Function> simple2CellMultExpectedResult()
 	{
 		return list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
@@ -83,7 +83,7 @@ public final class FormulaConverterTest
 		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
 
-	private List<Function> simpleScalarMultExpectedResult()
+	public List<Function> simpleScalarMultExpectedResult()
 	{
 		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
 		return list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
