@@ -1,16 +1,17 @@
 package ls.tools.excel.serialize.js;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import fj.Effect;
-import fj.data.List;
+import static ls.tools.excel.CellType.STRING;
 import ls.tools.excel.model.BinOpExpr;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.CompositeExpr;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.ExprVisitorTrait.ExprVisitor;
 import ls.tools.excel.model.FunctionExpr;
 import ls.tools.excel.model.LiteralExpr;
 import ls.tools.excel.model.VarExpr;
-import ls.tools.excel.model.ExprVisitorTrait.ExprVisitor;
+import fj.Effect;
+import fj.data.List;
 
 public final class JSSerializingVisitor implements ExprVisitor
 {
@@ -71,7 +72,9 @@ public final class JSSerializingVisitor implements ExprVisitor
 	@Override
 	public void visit(LiteralExpr le)
 	{
+		if (le.type() == STRING) w("'");
 		w(le.value());
+		if (le.type() == STRING) w("'");
 	}
 
 	@Override
