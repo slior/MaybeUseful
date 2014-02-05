@@ -2,7 +2,7 @@ package ls.tools.excel;
 
 
 import static fj.data.List.list;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
