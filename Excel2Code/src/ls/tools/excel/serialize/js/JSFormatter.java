@@ -1,16 +1,11 @@
 package ls.tools.excel.serialize.js;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static fj.Show.listShow;
-import static fj.Show.showS;
-import static java.lang.String.format;
-import fj.F;
-import fj.F2;
-import fj.Show;
-import fj.data.List;
 import ls.tools.excel.Function;
 import ls.tools.excel.FunctionFormatter;
 import ls.tools.excel.model.Param;
+import fj.F2;
+import fj.data.List;
 
 public final class JSFormatter implements FunctionFormatter
 {
@@ -20,20 +15,14 @@ public final class JSFormatter implements FunctionFormatter
 	{
 		checkArgument(f != null,"Function to format can't be null");
 		
-		return String.format("%1$s %2$s %3$s", header(f), body(f), footer(f));
+		return String.format("%1$s %2$s", header(f), body(f));
 		
-	}
-
-	private String footer(Function f)
-	{
-		return "";
 	}
 
 	private String body(final Function f)
 	{
-		final JSSerializingVisitor exprSerializer = new JSSerializingVisitor();
-		f.body().accept(exprSerializer);
-		return exprSerializer.result();
+		final JSExpressionSerializer exprSerializer = new JSExpressionSerializer();
+		return exprSerializer.serialize(f.body());
 	}
 
 	private String header(final Function f)

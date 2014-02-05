@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="ls/tools/excel/model/ExprVisitorTrait.aj" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="var" path="PROGRAMMING/poi-3.9/poi-3.9-20121203.jar" sourcepath="/PROGRAMMING/poi-3.9/src/java"/>
 	<classpathentry kind="var" path="PROGRAMMING/poi-3.9/poi-ooxml-3.9-20121203.jar"/>
@@ -11,6 +11,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="var" path="PROGRAMMING/guava-14.0.1.jar"/>
 	<classpathentry kind="var" path="PROGRAMMING/functionaljava/functionaljava.jar"/>
-	<classpathentry kind="con" path="org.eclipse.ajdt.core.ASPECTJRT_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
