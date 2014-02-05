@@ -28,8 +28,10 @@ public final class FormulaConverterTest
 
 	private static final String CUBE_SQRT = "cube_sqrt";
 	private static final String MULT_OP = "*";
-	private static final String C3 = "C3";
 	private static final String B3 = "B3";
+	private static final String C3 = "C3";
+	private static final String D3 = "D3";
+	private static final String E3 = "E3";
 	private static final String CUBE = "cube";
 	private static final String SQUARE = "square";
 	private static final String TIMES2 = "times2";
@@ -78,7 +80,6 @@ public final class FormulaConverterTest
 	public void simpleScalarCellMultiplication() throws Exception
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
-//		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
 		final List<Function> expected = simpleScalarMultExpectedResult();
 		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
 	}
@@ -117,7 +118,7 @@ public final class FormulaConverterTest
 	private static List<Function> cubeExpectedFunctions()
 	{
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
-		final VarExpr d3Var = e().var("D3").ofType(NUMERIC);
+		final VarExpr d3Var = e().var(D3).ofType(NUMERIC);
 		return list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
 												e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
 					FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
@@ -131,7 +132,7 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE_SQRT);
 		final VarExpr b3 = e().var(B3).ofType(NUMERIC);
-		final VarExpr e3 = e().var("E3").ofType(NUMERIC);
+		final VarExpr e3 = e().var(E3).ofType(NUMERIC);
 		
 		final Function lastFunc = FunctionImpl.create(CUBE_SQRT, list(param(B3,NUMERIC)),
 												e().sequence(

@@ -54,6 +54,13 @@ public final class FormulaConverter
 	private List<Expr> bodySeq = nil();
 	private int localVarCount = 0;
 	
+	/**
+	 * Given a workbook and a named cell in a given sheet, create and retrieve the functions referenced by the named cell, and all functions it depends on.
+	 * @param wb The workbook the functions are in
+	 * @param sheetName The name of the sheet containing the named cell
+	 * @param name The name of the named cell.
+	 * @return The list of functions parsed from the given named cell, and all functions it depends on.
+	 */
 	List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
 		final Name n = wb.getName(name);
@@ -111,7 +118,7 @@ public final class FormulaConverter
 	 * Given a list of tokens, in reverse polish notation, go over all of them, and create necessary expressions for all of them.
 	 * This will update the {@link #bodySeq body} expression sequence, and possibly the {@link #generatedFunctions} list, if any other functions are created.
 	 * <p>
-	 * This is basically the "heart" of the conversion process. All token are converted to expressions, pushed to a {@link #resultStack stack}, and popped when necessary.
+	 * This is basically the "heart" of the conversion process. All tokens are converted to expressions, pushed to a {@link #resultStack stack}, and popped when necessary.
 	 * all the stack handling (should) take(s) place in this function alone.
 	 * </p>
 	 * @param tokens The formula tokens to convert from.
@@ -325,6 +332,14 @@ public final class FormulaConverter
 	}
 
 
+	/**
+	 * For the given set of names, generate the necessary functions (and all dependent ones), and return them.
+	 * @param workbook The workbook containing the names
+	 * @param sheetName The name of the sheet containing the names in the workbook.
+	 * @param names The set of names to convert.
+	 * @return The list of functions converted from formulas in the given cells.
+	 * @see #formulasFromNamedCell(XSSFWorkbook, String, String)
+	 */
 	List<Function> formulasFromNamedCells(final XSSFWorkbook workbook,final String sheetName, final String... names)
 	{
 		final List<Function> initial = nil();
