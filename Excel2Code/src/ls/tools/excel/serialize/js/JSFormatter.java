@@ -4,12 +4,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import ls.tools.excel.Function;
 import ls.tools.excel.FunctionFormatter;
 import ls.tools.excel.model.Param;
+import fj.F;
 import fj.F2;
 import fj.data.List;
 
 public final class JSFormatter implements FunctionFormatter
 {
-
+//TODO: need to generate proper calls for built-in functions
 	
 	@Override public String format(final Function f)
 	{
@@ -32,8 +33,6 @@ public final class JSFormatter implements FunctionFormatter
 
 	private String formatParams(final List<Param> parameters)
 	{
-//		return listShow(showS(new F<Param,String>() { @Override public String f(Param a) { return a.name(); } }))
-//				.showS(parameters);
 		final String result = parameters.foldLeft(new F2<String,Param,String>() {
 			@Override public String f(String accum, Param p) {
 				return accum + p.name() + ",";
@@ -43,11 +42,24 @@ public final class JSFormatter implements FunctionFormatter
 	}
 
 	@Override
-	public <F extends Function> String format(List<F> functions, String delimiter)
+	public <Func extends Function> String format(final List<Func> functions, final String delimiter)
 	{
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(
-				"Method format is not implemented yet in JSFormatter");
+		checkArgument(functions != null,"Functions can't be null");
+		checkArgument(delimiter != null,"Delimiter can't be null");
+		
+		final String result = functions
+								//format each function
+								.map(new F<Func,String>() {
+									@Override public String f(Func func) {
+										return format(func);
+									}
+								})
+								//join all of them, with the given delimiter
+								.foldLeft(new F2<String,String,String>() {
+									@Override public String f(String accum, String output) {
+										return accum + output + delimiter;
+									}}, "");
+		return result.substring(0,result.length());
 	}
 
 }

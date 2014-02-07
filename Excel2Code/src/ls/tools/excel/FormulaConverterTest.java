@@ -2,7 +2,7 @@ package ls.tools.excel;
 
 
 import static fj.data.List.list;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
@@ -146,11 +146,19 @@ public final class FormulaConverterTest
 	@Test
 	public void generatingFunctionsForSetOfNames() throws Exception
 	{
-		final List<Function> result = fc.formulasFromNamedCells(workbook(),SHEET1,MULT_FUNC_NAME,TIMES2);
+		final List<Function> result = fc.formulasFromNamedCells(workbook(),MULT_FUNC_NAME,TIMES2);
 		final List<Function> expected = 
 								simple2CellMultExpectedResult()
 								.append(simpleScalarMultExpectedResult())
 								.nub();
+		assertTrue(listsEqual(result, expected, funcEqPredicate));
+	}
+	
+	@Test
+	public void convertWithoutSheetName() throws Exception
+	{
+		final List<Function> result = fc.formulasFromNamedCell(workbook(), TIMES2);
+		final List<Function> expected = simpleScalarMultExpectedResult();
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 	

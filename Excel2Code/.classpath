@@ -11,5 +11,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="var" path="PROGRAMMING/guava-14.0.1.jar"/>
 	<classpathentry kind="var" path="PROGRAMMING/functionaljava/functionaljava.jar"/>
+	<classpathentry kind="var" path="PROGRAMMING/commons-cli-1.2/commons-cli-1.2.jar" sourcepath="/PROGRAMMING/commons-cli-1.2/commons-cli-1.2-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/D:/Copy/Copy/Programming/libs/commons-cli-1.2/commons-cli-1.2-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

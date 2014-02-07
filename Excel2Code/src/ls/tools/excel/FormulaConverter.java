@@ -12,6 +12,7 @@ import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.CellType.fromSSCellType;
 import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.fj.Util.notEmpty;
 import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 import java.util.Stack;
@@ -64,13 +65,23 @@ public final class FormulaConverter
 	List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
 		final Name n = wb.getName(name);
+		return formulasFromNamedCell(wb, sheetName, n);
+	}
+
+
+	private List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final Name n)
+	{
+		checkArgument(wb != null,"Workbook can't be null");
+		checkArgument(notEmpty(sheetName),"Sheet name can't be empty");
+		checkArgument(n != null,"Named cell can't be null");
+		
 		final CellReference cr = new CellReference(n.getRefersToFormula());
 		sheet = wb.getSheet(sheetName);
 		fpwb = XSSFEvaluationWorkbook.create(wb);
 		final Cell c = sheet.getRow(cr.getRow()).getCell(cr.getCol());
 		
 		final String formula = c.getCellFormula();
-		return convertFormulaToFunction(name, formula);
+		return convertFormulaToFunction(n.getNameName(), formula);
 	}
 
 
@@ -335,18 +346,17 @@ public final class FormulaConverter
 	/**
 	 * For the given set of names, generate the necessary functions (and all dependent ones), and return them.
 	 * @param workbook The workbook containing the names
-	 * @param sheetName The name of the sheet containing the names in the workbook.
 	 * @param names The set of names to convert.
 	 * @return The list of functions converted from formulas in the given cells.
 	 * @see #formulasFromNamedCell(XSSFWorkbook, String, String)
 	 */
-	List<Function> formulasFromNamedCells(final XSSFWorkbook workbook,final String sheetName, final String... names)
+	public List<Function> formulasFromNamedCells(final XSSFWorkbook workbook,final String... names)
 	{
 		final List<Function> initial = nil();
 		return list(names)
 					//convert each name to a list of functions. Note: clears the unresolved symbols after each mapping.
 					.map(new F<String,List<Function>>() { @Override public List<Function> f(final String name) { 
-						final List<Function> ret = formulasFromNamedCell(workbook, sheetName, name); 
+						final List<Function> ret = formulasFromNamedCell(workbook, name); 
 						clearUnresolvedSymbols(); 
 						return ret;
 						}})
@@ -356,6 +366,14 @@ public final class FormulaConverter
 						}},initial)
 					//and remove duplicates
 					.nub();
+	}
+
+	List<Function> formulasFromNamedCell(final XSSFWorkbook workbook, final String name)
+	{
+		checkArgument(workbook != null,"Source workbook can't be null ");
+		checkArgument(name != null,"Name of named cell can't be null");
+		final Name n = workbook.getName(name);
+		return formulasFromNamedCell(workbook, n.getSheetName(), name);
 	}
 
 }
