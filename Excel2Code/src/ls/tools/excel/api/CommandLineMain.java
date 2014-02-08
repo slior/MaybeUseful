@@ -56,19 +56,11 @@ public final class CommandLineMain
 	{
 		try
 		{
-			final CommandLine cl = parse(args);
+			final CommandLine cl = parseAndValidate(args);
 			if (cl.hasOption(HELP))
 				printUsage();
 			else
-			{
-				final XSSFWorkbook wb = workbookFor(cl.getOptionValue(SOURCE));
-				final String[] names = retrieveNames(cl, wb); //if no names are given, will retrieve all
-				final FormulaConverter fc = new FormulaConverter();
-				List<Function> functions = fc.formulasFromNamedCells(wb, names);
-				final FunctionFormatter formatter = formatterFor(cl.getOptionValue(LANGUAGE));
-				final String output = formatter.format(functions, NL + NL);
-				writeToFile(cl.getOptionValue(OUT_FILE),output);
-			}
+				readConvertAndOutput(cl);
 		}
 		catch (ParseException e)
 		{
@@ -90,17 +82,57 @@ public final class CommandLineMain
 	}
 
 
+	/**
+	 * Do the entire conversion process, given the arguments, as parsed in the passed {@link CommandLine command line} object.
+	 * <br/>
+	 * The command line is assumed to be {@link #parseAndValidate(String[]) valid} at this point.
+	 * <br/><br/>
+	 * The conversion process:
+	 * <ol>
+	 * <li>Read the file given in the {@link #SOURCE} argument and parse it as an excel workbook (OpenXML). </li>
+	 * <li>Resolve the names, either those given as argument ({@link #NAMES}), or all names in the workbook</li>
+	 * <li>Convert the names to functions</li>
+	 * <li>Format the resulting functions according to the given language formatter ({@link #LANGUAGE})</li>
+	 * <li>Output the result to the given file ({@link #OUT_FILE}) or to console, if no output file is given</li>
+	 * </ol>
+	 * @param cl The parsed command line object
+	 * @throws InvalidFormatException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	private void readConvertAndOutput(final CommandLine cl) throws InvalidFormatException, FileNotFoundException, IOException
+	{
+		say("Reading workbook...");
+		final XSSFWorkbook wb = workbookFor(cl.getOptionValue(SOURCE));
+		say("Resolving names...");
+		final String[] names = retrieveNames(cl, wb); //if no names are given, will retrieve all
+		say("Translating to functions...");
+		final FormulaConverter fc = new FormulaConverter();
+		List<Function> functions = fc.formulasFromNamedCells(wb, names);
+		say("Formatting to target language...");
+		final FunctionFormatter formatter = formatterFor(cl.getOptionValue(LANGUAGE));
+		final String output = formatter.format(functions, NL + NL);
+		say("Outputting result...");
+		writeToFile(cl.getOptionValue(OUT_FILE),output);
+		say("Done.");
+	}
+
+
 	private void writeToFile(final String outFilename, final String output) throws IOException
 	{
-		
 		final boolean realFileRequested = (outFilename != null && !outFilename.equals(""));
-		try (final BufferedWriter bw =  realFileRequested ? 
-				new BufferedWriter(new FileWriter(outFilename)) : 
-				new BufferedWriter(new PrintWriter(System.out)))
-		{
-			bw.write(output);
-			bw.flush();
-		}
+		if (realFileRequested)
+			try (final BufferedWriter bw =  new BufferedWriter(new FileWriter(outFilename))) { //automatically closes the file
+				writeOut(output, bw);
+			}
+		else writeOut(output,new BufferedWriter(new PrintWriter(System.out)));
+	}
+
+
+	private void writeOut(final String output, final BufferedWriter bw) throws IOException
+	{
+		bw.write(output);
+		bw.flush();
 	}
 
 
@@ -142,7 +174,7 @@ public final class CommandLineMain
 	private void say(final String s) { System.out.println(String.valueOf(s)); }
 
 
-	private CommandLine parse(final String[] args) throws ParseException
+	private CommandLine parseAndValidate(final String[] args) throws ParseException
 	{
 		if (args.length <= 0) throw new ParseException("No arguments given");
 		final CommandLineParser clParser = new BasicParser();
