@@ -67,17 +67,9 @@ public final class CommandLineMain
 			say("Invalid arguments: " + e.getMessage());
 			printUsage();
 		}
-		catch (InvalidFormatException e)
+		catch (InvalidFormatException | IOException e)
 		{
-			say("Invalid workbook format: " + e.getMessage());
-		}
-		catch (FileNotFoundException e)
-		{
-			say("Can't find file: " + e.getMessage());
-		}
-		catch (IOException e)
-		{
-			say("Can't read file: " + e.getMessage());
+			say("Something went wrong reading the source file: " + e.getMessage());
 		}
 	}
 
@@ -121,6 +113,7 @@ public final class CommandLineMain
 	private void writeToFile(final String outFilename, final String output) throws IOException
 	{
 		final boolean realFileRequested = (outFilename != null && !outFilename.equals(""));
+		say("Output target: " + (realFileRequested ? outFilename : "Console") + NL);
 		if (realFileRequested)
 			try (final BufferedWriter bw =  new BufferedWriter(new FileWriter(outFilename))) { //automatically closes the file
 				writeOut(output, bw);
@@ -170,10 +163,6 @@ public final class CommandLineMain
 		hf.printHelp(80, "excel2code <options>", "Excel File to Code Converter.\nValid options:", options, "");
 	}
 
-
-	private void say(final String s) { System.out.println(String.valueOf(s)); }
-
-
 	private CommandLine parseAndValidate(final String[] args) throws ParseException
 	{
 		if (args.length <= 0) throw new ParseException("No arguments given");
@@ -184,6 +173,7 @@ public final class CommandLineMain
 		return cl;
 	}
 
+	private void say(final String s) { System.out.println(String.valueOf(s)); }
 
 	public static void main(final String[] args)
 	{
