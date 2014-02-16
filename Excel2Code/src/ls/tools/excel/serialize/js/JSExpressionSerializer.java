@@ -2,7 +2,9 @@ package ls.tools.excel.serialize.js;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
+import static ls.tools.excel.BuiltInFunction.isBuiltinFunction;
 import static ls.tools.excel.CellType.STRING;
+import ls.tools.excel.BuiltInFunction;
 import ls.tools.excel.model.BinOpExpr;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.CompositeExpr;
@@ -51,14 +53,35 @@ final class JSExpressionSerializer
 	private String serialize(FunctionExpr fe) 
 	{
 		checkArgument(fe != null,"Function expression can't be null");
+		return (isBuiltinFunction(fe.functionName())) ? 
+				formatBuiltInFunctionCall(fe) : 
+				formatUserDefinedFunctionCall(fe);
+	}
+
+	private String formatUserDefinedFunctionCall(final FunctionExpr fe) { return format(FUNCTION_CALL_PATTERN,fe.functionName(),formatArgumentsOf(fe)); }
+
+	private String formatBuiltInFunctionCall(final FunctionExpr fe)
+	{
+		final BuiltInFunction f = BuiltInFunction.from(fe.functionName());
+		String funcCall ;
+		switch (f)
+		{
+			case SQRT : funcCall = "Math.sqrt"; break;
+			default : throw new IllegalStateException("Unrecognized built-in function: " + f.name());
+		}
+		return format(FUNCTION_CALL_PATTERN,funcCall,formatArgumentsOf(fe));
+	}
+	
+	private String formatArgumentsOf(FunctionExpr fe)
+	{
 		final String args = fe.args().foldLeft(new F2<String,Expr,String>() {
 			@Override public String f(String accum, Expr e) {
 				return accum + serialize(e) + ",";
 			}
 		}, "");
-		return format(FUNCTION_CALL_PATTERN,fe.functionName(),args.substring(0, args.length()-1));
+		return args.substring(0, args.length()-1);
 	}
-	
+
 	private String serialize(LiteralExpr e) 
 	{
 		checkArgument(e != null,"Literal expression can't be null");
