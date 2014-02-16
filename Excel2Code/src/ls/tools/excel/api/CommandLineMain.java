@@ -2,6 +2,7 @@ package ls.tools.excel.api;
 
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
 import static org.apache.commons.cli.OptionBuilder.hasArg;
 import static org.apache.commons.cli.OptionBuilder.withArgName;
 
@@ -11,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import ls.tools.excel.FormulaConverter;
 import ls.tools.excel.Function;
@@ -28,11 +30,15 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import fj.F2;
 import fj.data.List;
+import fj.data.Option;
 
 public final class CommandLineMain
 {
 
+	private static final int HELP_WIDTH = 120;
+	private static final String PROGRAM_NAME = "excel2code";
 	private static final String OUT_FILE = "output";
 	private static final String LANGUAGE = "language";
 	private static final String NAMES = "names";
@@ -48,7 +54,7 @@ public final class CommandLineMain
 		options.addOption(hasArg().withArgName("file").withDescription("The Excel source file name").create(SOURCE));
 		options.addOption(hasArg().withArgName("file").withDescription("The output file").create(OUT_FILE));
 		options.addOption(withArgName("name1,name2,...").hasArgs().withDescription("The names of the cells containing the formulas to convert").create(NAMES));
-		options.addOption(hasArg().withArgName("lang").withDescription("The target language to generate code for").create(LANGUAGE));
+		options.addOption(hasArg().withArgName("lang").withDescription("The target language to generate code for. Can also be the class name for the formatter to use.").create(LANGUAGE));
 	}
 	
 
@@ -60,7 +66,10 @@ public final class CommandLineMain
 			if (cl.hasOption(HELP))
 				printUsage();
 			else
+			{
+				say("Processing: " + command(cl));
 				readConvertAndOutput(cl);
+			}
 		}
 		catch (ParseException e)
 		{
@@ -71,6 +80,21 @@ public final class CommandLineMain
 		{
 			say("Something went wrong reading the source file: " + e.getMessage());
 		}
+		catch (RuntimeException e)
+		{
+			say("Error occurred: " + e.getMessage());
+		}
+	}
+
+
+	private String command(final CommandLine cl)
+	{
+		final List<org.apache.commons.cli.Option> options = List.list(cl.getOptions());
+		return options.foldLeft(new F2<String,org.apache.commons.cli.Option,String>() {
+			@Override public String f(String accum, org.apache.commons.cli.Option opt) {
+				return accum + format("-%1$s %2$s ", opt.getOpt(), opt.getValue());
+			}
+		}, PROGRAM_NAME + " ");
 	}
 
 
@@ -134,7 +158,27 @@ public final class CommandLineMain
 		checkArgument(lang != null,"Language can't be null");
 		if (lang.equalsIgnoreCase("js")) 
 			return new JSFormatter();
-		else throw new IllegalArgumentException("Unrecognized language: " + lang); //TODO: will need to make this dynamic, to enable plugging in more languages
+		else 
+		{
+			final Option<FunctionFormatter> ffOpt = loadFormatter(lang);
+			return ffOpt.valueE("Unrecognized language: " + lang);
+		}
+	}
+
+
+	private Option<FunctionFormatter> loadFormatter(final String formatterClassName)
+	{
+		checkArgument(formatterClassName != null,"Can't have a null formatter class name");
+		try
+		{
+			@SuppressWarnings("unchecked")
+			Class<FunctionFormatter>  cls = (Class<FunctionFormatter>) Class.forName(formatterClassName);
+			return Option.iif(cls != null, cls.newInstance());
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
 
@@ -153,14 +197,20 @@ public final class CommandLineMain
 
 	private XSSFWorkbook workbookFor(final String filename) throws InvalidFormatException, FileNotFoundException, IOException
 	{
-		return (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
+		return (XSSFWorkbook) WorkbookFactory.create(new FileInputStream(filename));
 	}
 
 
 	private void printUsage()
 	{
 		final HelpFormatter hf = new HelpFormatter();
-		hf.printHelp(80, "excel2code <options>", "Excel File to Code Converter.\nValid options:", options, "");
+		final StringWriter sw = new StringWriter();
+		final PrintWriter pw = new PrintWriter(sw);
+		pw.println("Excel File to Code Converter.\n");
+		hf.printUsage(pw, HELP_WIDTH, PROGRAM_NAME, options);
+		pw.println("Options:");
+		hf.printOptions(pw, HELP_WIDTH, options, 2, 0);
+		say(sw.toString());
 	}
 
 	private CommandLine parseAndValidate(final String[] args) throws ParseException
