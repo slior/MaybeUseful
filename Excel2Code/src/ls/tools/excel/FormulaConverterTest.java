@@ -39,14 +39,7 @@ public final class FormulaConverterTest
 	private static final String MULT_FUNC_NAME = "mult";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
-	private final F2<Function, Function, Boolean> funcEqPredicate = new F2<Function, Function, Boolean>() { 
-		@Override public Boolean f(Function a, Function b) 
-		{
-			if (a == null) return b == null;
-			final boolean ret = a.equals(b);
-			return ret;
-		} 
-	};
+	private final F2<Function, Function, Boolean> funcEqPredicate = new FunctionEqlPredicate();
 	
 	@Before 
 	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException

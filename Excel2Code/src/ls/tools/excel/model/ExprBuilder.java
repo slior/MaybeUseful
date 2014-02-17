@@ -42,7 +42,7 @@ public final class ExprBuilder
 	public interface VarBuilder { VarExpr ofType(CellType _t); }
 		
 	/**
-	 * Enables <code>create().var("name").ofType("type")</code>
+	 * Enables <code>e().var("name").ofType("type")</code>
 	 */
 	public VarBuilder var(final String _n)
 	{
@@ -79,7 +79,7 @@ public final class ExprBuilder
 	}
 	
 	/**
-	 * Enables <code>create().literal().withValue("val").ofType("type");</code>
+	 * Enables <code>e().literal("val").ofType("type");</code>
 	 */
 	public LiteralBuilder literal(final String val)
 	{
@@ -123,8 +123,9 @@ public final class ExprBuilder
 
 	
 	/**
-	 * Enables <code>create().binOp().withOperator(op).ofType("type").andOperands(expr1,expr2)</code> 
+	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code> 
 	 */
+	//TODO: the operators should move to be an enum, a set of predefined functions
 	public BinOpBuilder binOp(final String _op)
 	{
 		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
@@ -178,6 +179,7 @@ public final class ExprBuilder
 	{
 		FunctionInvocationBuilder ofType(CellType t);
 		FunctionExpr withArgs(Expr... args );
+		FunctionExpr withArgs(List<Expr> args);
 	}
 	
 	public FunctionInvocationBuilder invocationOf(final String funcName)
@@ -187,39 +189,44 @@ public final class ExprBuilder
 		{
 			private CellType type;
 
-			@Override public FunctionExpr withArgs(final Expr... _args)
+			final class FunctionExprImpl implements FunctionExpr
 			{
-				return new FunctionExpr()
+				final List<Expr> args;
+				@SuppressWarnings("unchecked")
+				FunctionExprImpl(final List<Expr> _args) { this.args = (List<Expr>) (_args == null ? List.nil() : _args); }
+				
+				@Override public String functionName() { return funcName; }
+				@Override public List<Expr> args() { return args; }
+				@Override public CellType type() { return type; }
+				@Override public boolean equals(Object that)
 				{
-					final List<Expr> args = List.list(_args);
-					@Override public String functionName() { return funcName; }
-					@Override public List<Expr> args() { return args; }
-					@Override public CellType type() { return type; }
-					@Override public boolean equals(Object that)
-					{
-						if (this == that) return true;
-						if (that == null) return false;
-						if (!(that instanceof FunctionExpr)) return false;
-						final FunctionExpr fe = (FunctionExpr)that;
-						return equal(functionName(),fe.functionName()) && equal(type(),fe.type()) && listsEqual(args(), fe.args(), exprEqlPredicate);
-					}
+					if (this == that) return true;
+					if (that == null) return false;
+					if (!(that instanceof FunctionExpr)) return false;
+					final FunctionExpr fe = (FunctionExpr)that;
+					return equal(functionName(),fe.functionName()) && equal(type(),fe.type()) && listsEqual(args(), fe.args(), exprEqlPredicate);
+				}
 
-					@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
-					@Override public String toString()
-					{
-						final String argsString = args().foldRight(new F2<Expr,String,String>() {
-							@Override public String f(Expr e, String accum)  { return e.toString() + "," + accum; }}, "");
-						return functionName() + "(" + argsString.substring(0, argsString.length()-1) + ")";
-					}
-				};
+				@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
+				@Override public String toString()
+				{
+					final String argsString = args().foldRight(new F2<Expr,String,String>() {
+						@Override public String f(Expr e, String accum)  { return e.toString() + "," + accum; }}, "");
+					return functionName() + "(" + argsString.substring(0, argsString.length()-1) + ")";
+				}
 			}
-
+			
+			@Override public FunctionExpr withArgs(final Expr... _args) { return new FunctionExprImpl(List.list(_args)); }
+			@Override public FunctionExpr withArgs(final List<Expr> args) { return new FunctionExprImpl(args); }
+			
 			@Override public FunctionInvocationBuilder ofType(final CellType t)
 			{
 				checkArgument(t != null,"Type can't be null"); //should also check for validity of the type
 				type = t;
 				return this;
 			}
+
+			
 		};
 	}
 	

@@ -36,7 +36,6 @@ public enum BuiltInFunction implements Function
 	 */
 	public static boolean isBuiltinFunction(final String functionName)
 	{
-		checkArgument(functionName != null && !"".equals(functionName),"Function name can't be null or empty");
 		return list(values()).exists(functionWithName(functionName));
 	}
 
@@ -52,6 +51,7 @@ public enum BuiltInFunction implements Function
 	 */
 	private static final F<BuiltInFunction, Boolean> functionWithName(final String functionName)
 	{
+		checkArgument(functionName != null && !"".equals(functionName),"Function name can't be null or empty");
 		return new F<BuiltInFunction, Boolean>() {
 					@Override public Boolean f(BuiltInFunction a) {
 						return a.name().equalsIgnoreCase(functionName);

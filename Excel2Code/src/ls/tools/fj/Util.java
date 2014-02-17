@@ -39,4 +39,5 @@ public final class Util
 	}
 
 	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
+	
 }
