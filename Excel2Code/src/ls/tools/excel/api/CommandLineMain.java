@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static org.apache.commons.cli.OptionBuilder.hasArg;
 import static org.apache.commons.cli.OptionBuilder.withArgName;
+import static org.apache.commons.cli.OptionBuilder.withDescription;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -23,7 +24,6 @@ import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -50,11 +50,22 @@ public final class CommandLineMain
 	@SuppressWarnings("static-access")
 	public CommandLineMain()
 	{
-		options.addOption(OptionBuilder.withDescription("Usage help information").create(HELP));
-		options.addOption(hasArg().withArgName("file").withDescription("The Excel source file name").create(SOURCE));
-		options.addOption(hasArg().withArgName("file").withDescription("The output file").create(OUT_FILE));
-		options.addOption(withArgName("name1,name2,...").hasArgs().withDescription("The names of the cells containing the formulas to convert").create(NAMES));
-		options.addOption(hasArg().withArgName("lang").withDescription("The target language to generate code for. Can also be the class name for the formatter to use.").create(LANGUAGE));
+		options.addOption(withDescription("Usage help information")
+							.create(HELP));
+		options.addOption(hasArg().withArgName("file")
+							.withDescription("The Excel source file name")
+							.isRequired()
+							.create(SOURCE));
+		options.addOption(hasArg().withArgName("file")
+							.withDescription("The output file")
+							.create(OUT_FILE));
+		options.addOption(withArgName("name1 name2 ...").hasArgs()
+						  	.withDescription("The names of the cells containing the formulas to convert")
+						  	.create(NAMES));
+		options.addOption(hasArg().withArgName("lang")
+						  	.isRequired()
+						  	.withDescription("The target language to generate code for. Can also be the class name for the formatter to use.")
+						  	.create(LANGUAGE));
 	}
 	
 
@@ -124,7 +135,7 @@ public final class CommandLineMain
 		final String[] names = retrieveNames(cl, wb); //if no names are given, will retrieve all
 		say("Translating to functions...");
 		final FormulaConverter fc = new FormulaConverter();
-		List<Function> functions = fc.formulasFromNamedCells(wb, names);
+		final List<Function> functions = fc.formulasFromNamedCells(wb, names);
 		say("Formatting to target language...");
 		final FunctionFormatter formatter = formatterFor(cl.getOptionValue(LANGUAGE));
 		final String output = formatter.format(functions, NL + NL);

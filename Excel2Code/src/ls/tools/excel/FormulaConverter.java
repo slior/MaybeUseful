@@ -373,6 +373,7 @@ public final class FormulaConverter
 		checkArgument(workbook != null,"Source workbook can't be null ");
 		checkArgument(name != null,"Name of named cell can't be null");
 		final Name n = workbook.getName(name);
+		checkNotNull(n, "Couldn't find name: " + name);
 		return formulasFromNamedCell(workbook, n.getSheetName(), name);
 	}
 
