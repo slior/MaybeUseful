@@ -28,12 +28,11 @@ final class ExcelTestGenerator
 	Function generateTestFuncFor(final Function funcToTest, final String sheetName, final List<String> inputCells, final String expectedOutputCell)
 	{
 		checkArgument(notEmpty(sheetName),"Sheet name can't be empty");
-		
+		checkArgument(inputCells.length() == funcToTest.parameters().length(),"Input cells count must match the function parameter count");
 		final String expected = cellValue(sheetName, expectedOutputCell);
 		
 		//Assumption: the input cells match the parameters in location in the list.
 		// i.e. the i-th parameter corresponds to the i-th input cell given.
-		// TODO: verify these inputs at the beginning, at least matching length
 		final List<Expr> argValues = funcToTest.parameters().zipWith(inputCells, new F2<Param, String, Expr>() {
 			@Override public Expr f(Param p, String inputCell) {
 				return e().literal(cellValue(sheetName,inputCell)).ofType(p.type());

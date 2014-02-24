@@ -37,6 +37,7 @@ import fj.data.Option;
 public final class CommandLineMain
 {
 
+	private static final String TESTS = "tests";
 	private static final int HELP_WIDTH = 120;
 	private static final String PROGRAM_NAME = "excel2code";
 	private static final String OUT_FILE = "output";
@@ -66,6 +67,8 @@ public final class CommandLineMain
 						  	.isRequired()
 						  	.withDescription("The target language to generate code for. Can also be the class name for the formatter to use.")
 						  	.create(LANGUAGE));
+		options.addOption(withDescription("Create tests for generated functions")
+							.create(TESTS));
 	}
 	
 

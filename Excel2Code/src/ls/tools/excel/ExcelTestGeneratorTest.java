@@ -22,20 +22,24 @@ import org.junit.Test;
 
 import fj.data.List;
 
-public class TestCreationTest
+public class ExcelTestGeneratorTest
 {
 
+	private static final String H5 = "H5";
+	private static final String SHEET1 = "Sheet1";
 	private static final String EXPECTED_RESULT_VAR_NAME = "result";
 	private static final FunctionEqlPredicate functionsEqual = new FunctionEqlPredicate();
 	private static final List<Param> NO_PARAMS = nil();
 	
 	private XSSFWorkbook _wb;
+	private ExcelTestGenerator testGenerator;
 	
 	@Before 
 	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
 	{
 		//!Assumption: it's an openxml format (xlsx, not xls)!
 		_wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
+		testGenerator = new ExcelTestGenerator(workbook());
 	}
 	
 	private XSSFWorkbook workbook() { return _wb; }
@@ -43,13 +47,12 @@ public class TestCreationTest
 	@Test
 	public void creatingSingleTestForTimes2()
 	{
-		final ExcelTestGenerator tg = new ExcelTestGenerator(workbook());
 		final Function scalarMultFunc = new FormulaConverterTest().simpleScalarMultExpectedResult().head();
-		final Function testFunc = tg.generateTestFuncFor(scalarMultFunc,"Sheet1",list("B5"),"H5");
+		final Function testFunc = testGenerator.generateTestFuncFor(scalarMultFunc,SHEET1,list("B5"),H5);
 		
 		final Binding resultVarDef = e().bindingOf(e().var(EXPECTED_RESULT_VAR_NAME).ofType(scalarMultFunc.returnType()))
 				   				  		.to(e().invocationOf(scalarMultFunc).withArgs(e().literal("3").ofType(NUMERIC)));
-		final Function expected = FunctionImpl.create("test_" + scalarMultFunc.name() + "_" + "H5", NO_PARAMS , 
+		final Function expected = FunctionImpl.create("test_" + scalarMultFunc.name() + "_" + H5, NO_PARAMS , 
 														e().sequence(
 																resultVarDef,
 																e().binOp("=").andOperands(resultVarDef.var(), e().literal("6").ofType(NUMERIC))), 
@@ -57,8 +60,21 @@ public class TestCreationTest
 		
 		assertTrue("Simple scalar multiplication test creation failed for B5 input and H5 output", 
 					functionsEqual.f(testFunc, expected));
-		
 	}
 	
+	@Test(expected=IllegalArgumentException.class)
+	public void nonMatchingInputCellsAndParameterCountThrowsAnException()
+	{
+		final Function scalarMultFunc = new FormulaConverterTest().simpleScalarMultExpectedResult().head();
+		testGenerator.generateTestFuncFor(scalarMultFunc, SHEET1, list("",""), H5);
+	}
+	
+//	@Test
+//	public void generateTestsForSeveralFunctions()
+//	{
+//		final FormulaConverterTest formulaConverterTest = new FormulaConverterTest();
+//		final Function scalarMultFunc = formulaConverterTest.simpleScalarMultExpectedResult().head();
+////		final Function cellMultFunc = formulaConverterTest. 
+//	}
 
 }
