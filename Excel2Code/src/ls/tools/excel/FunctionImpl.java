@@ -1,3 +1,4 @@
+// $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
 package ls.tools.excel;
 
 import static com.google.common.base.Objects.equal;
@@ -7,11 +8,11 @@ import static fj.Show.listShow;
 import static fj.Show.showS;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
+import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import static ls.tools.fj.Util.notEmpty;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Param;
-import ls.tools.fj.Util;
 import fj.F;
 import fj.F2;
 import fj.P2;
@@ -36,9 +37,9 @@ final class FunctionImpl implements Function
 		
 		@Override public String name() { return this.name;}
 		@Override public CellType type() { return this.type; }
-		@Override public boolean equals(Object that)
+		@Override public boolean equals(Object that) // $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
 		{
-			final P2<Boolean,ParamImpl> gr = Util.genericEqualAndCast(this, that, ParamImpl.class);
+			final P2<Boolean,ParamImpl> gr = genericEqualAndCast(this, that, ParamImpl.class);
 			return gr._1() && equal(name(),gr._2().name()) && equal(type(),gr._2().type());
 		}
 		
@@ -96,11 +97,11 @@ final class FunctionImpl implements Function
 		final Function f = (Function)that;
 		return 	equal(returnType(), f.returnType()) &&
 				equal(name(),f.name()) && 
-				sameParameters(this.parameters(),f.parameters()) &&
+				areSameParameters(this.parameters(),f.parameters()) &&
 				equal(body(),f.body());
 	}
 
-	private boolean sameParameters(final List<Param> list, final List<Param> list2)
+	private boolean areSameParameters(final List<Param> list, final List<Param> list2)
 	{
 		return listsEqual(list, list2, new F2<Param,Param,Boolean>()
 		{

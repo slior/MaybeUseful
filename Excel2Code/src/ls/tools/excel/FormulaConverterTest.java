@@ -70,7 +70,7 @@ public final class FormulaConverterTest
 
 
 	@Test
-	public void simpleScalarCellMultiplication() throws Exception
+	public void simpleScalarCellMultiplication()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
 		final List<Function> expected = simpleScalarMultExpectedResult();
@@ -88,7 +88,7 @@ public final class FormulaConverterTest
 	}
 	
 	@Test
-	public void singleParamUsedTwice() throws Exception
+	public void singleParamUsedTwice()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
@@ -101,7 +101,7 @@ public final class FormulaConverterTest
 	}
 
 	@Test
-	public void usingAnotherFormulaAsArgument() throws Exception
+	public void usingAnotherFormulaAsArgument()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE);
 		final List<Function> expectedFunctions = cubeExpectedFunctions();
@@ -121,7 +121,7 @@ public final class FormulaConverterTest
 	
 	
 	@Test
-	public void builtInFunctionOverAnotherFormula() throws Exception
+	public void builtInFunctionOverAnotherFormula()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE_SQRT);
 		final VarExpr b3 = e().var(B3).ofType(NUMERIC);
@@ -137,7 +137,7 @@ public final class FormulaConverterTest
 	}
 	
 	@Test
-	public void generatingFunctionsForSetOfNames() throws Exception
+	public void generatingFunctionsForSetOfNames()
 	{
 		final List<Function> result = fc.formulasFromNamedCells(workbook(),MULT_FUNC_NAME,TIMES2);
 		final List<Function> expected = 
@@ -148,7 +148,7 @@ public final class FormulaConverterTest
 	}
 	
 	@Test
-	public void convertWithoutSheetName() throws Exception
+	public void convertWithoutSheetName()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), TIMES2);
 		final List<Function> expected = simpleScalarMultExpectedResult();

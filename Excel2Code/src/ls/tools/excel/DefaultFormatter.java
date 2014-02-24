@@ -41,11 +41,11 @@ final class DefaultFormatter implements FunctionFormatter
 			return new F<Expr,String>() {
 				@Override public String f(Expr e)
 				{
-					final BinOpExpr a = (BinOpExpr)e;
+					final BinOpExpr expr = (BinOpExpr)e;
 					return String.format("%1$s %2$s %3$s",
-										formatExpr(a.subExpressions().head()),
-										a.op(),
-										formatExpr(a.subExpressions().tail().head()));
+										formatExpr(expr.subExpressions().head()),
+										expr.op(),
+										formatExpr(expr.subExpressions().tail().head()));
 				}};
 		}
 		else throw new IllegalArgumentException("Can't format expression of class: " + expr.getClass().getCanonicalName());

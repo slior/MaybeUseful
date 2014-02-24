@@ -64,8 +64,8 @@ public final class FormulaConverter
 	 */
 	List<Function> formulasFromNamedCell(final XSSFWorkbook wb, final String sheetName, final String name)
 	{
-		final Name n = wb.getName(name);
-		return formulasFromNamedCell(wb, sheetName, n);
+		final Name _name = wb.getName(name);
+		return formulasFromNamedCell(wb, sheetName, _name);
 	}
 
 
