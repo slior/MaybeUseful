@@ -27,10 +27,11 @@ import org.junit.Test;
 public final class POIInterfaceTests 
 {
 
+	private static final String IS_EVEN_NAMED_RANGE = "is_even";
 	private static final int RESOLVE_NAME_IN_CONTAINING_SHEET = -1;
 	private static final String SHEET1 = "Sheet1";
 	private static final String TEST_FILENAME = "test.xlsx";
-	private static final String MULT_NAMED_RANGE = "mult";
+//	private static final String MULT_NAMED_RANGE = "mult";
 	private static final String CUBE_SQRT_NAMED_RANGE = "cube_sqrt";
 	private static final String CUBE_NAMED_RANGE = "cube";
 	private Workbook wb;
@@ -66,7 +67,7 @@ public final class POIInterfaceTests
 		final List<String> firstExpectedNames = new ArrayList<>();
 		firstExpectedNames.add(CUBE_NAMED_RANGE);
 		firstExpectedNames.add(CUBE_SQRT_NAMED_RANGE);
-		firstExpectedNames.add(MULT_NAMED_RANGE);
+		firstExpectedNames.add(IS_EVEN_NAMED_RANGE);
 		for (int i = 0; i < firstExpectedNames.size(); i++)
 		{
 			final Name n = wb.getNameAt(i);
