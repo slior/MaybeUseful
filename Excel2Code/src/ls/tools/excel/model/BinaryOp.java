@@ -1,34 +1,25 @@
 package ls.tools.excel.model;
 
-import fj.data.List;
+import static ls.tools.excel.CellType.BOOLEAN;
+import static ls.tools.excel.CellType.NUMERIC;
 import ls.tools.excel.CellType;
 
-public enum BinaryOp implements Function
+public enum BinaryOp
 {
 
-	MULT {
-		@Override
-		public List<Param> parameters()
-		{
-//			return List.<Param>list()
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("Method parameters is not implemented yet in Function");
-		}
-
-		@Override
-		public Expr body()
-		{
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("Method body is not implemented yet in Function");
-		}
-
-		@Override
-		public CellType returnType()
-		{
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("Method returnType is not implemented yet in Function");
-		}
-		
+	MULT("*",NUMERIC), EQL("=",BOOLEAN);
+	
+	
+	
+	final CellType type;
+	final String op;
+	
+	private BinaryOp(final String _op, final CellType _type)
+	{
+		this.op = _op;
+		this.type = _type;
 	}
 	
+	public CellType type() { return type; }
+	public String operator() { return op; }
 }

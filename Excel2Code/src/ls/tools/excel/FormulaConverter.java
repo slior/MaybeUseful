@@ -18,6 +18,7 @@ import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 import java.util.Stack;
 
+import ls.tools.excel.model.BinaryOp;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Function;
@@ -152,7 +153,8 @@ public final class FormulaConverter
 				if (resultStack.size() < 2) throw new IllegalStateException("Binary operator must have at least two operands.");
 				final Expr op2 = resultStack.pop();
 				final Expr op1 = resultStack.pop();
-				resultStack.push(addToBody(e().binOp(op(token)).ofType(NUMERIC).andOperands(op1,op2)));
+//				resultStack.push(addToBody(e().binOp(op(token)).ofType(NUMERIC).andOperands(op1,op2)));
+				resultStack.push(addToBody(e().binOp(op1,op(token),op2)));
 			}
 			else if (isFuncCall(token))
 			{
@@ -215,12 +217,17 @@ public final class FormulaConverter
 	}
 
 
-	private String op(final Ptg token)
+//	private String op(final Ptg token)
+//	{
+//		if (token instanceof MultiplyPtg) return "*";
+//		else throw new IllegalArgumentException("Can't resolve operator for token: " + token.toFormulaString());
+//	}
+
+	private BinaryOp op(final Ptg token)
 	{
-		if (token instanceof MultiplyPtg) return "*";
+		if (token instanceof MultiplyPtg) return BinaryOp.MULT;
 		else throw new IllegalArgumentException("Can't resolve operator for token: " + token.toFormulaString());
 	}
-
 
 	private boolean isFuncCall(Ptg token)
 	{

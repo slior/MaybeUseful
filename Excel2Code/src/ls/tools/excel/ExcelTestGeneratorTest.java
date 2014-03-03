@@ -4,6 +4,7 @@ import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.BOOLEAN;
 import static ls.tools.excel.CellType.NUMERIC;
+import static ls.tools.excel.model.BinaryOp.EQL;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static org.junit.Assert.assertTrue;
@@ -57,7 +58,8 @@ public class ExcelTestGeneratorTest
 		final Function expected = createFunction("test_" + scalarMultFunc.name() + "_" + H5, NO_PARAMS , 
 														e().sequence(
 																resultVarDef,
-																e().binOp("=").andOperands(resultVarDef.var(), e().literal("6").ofType(NUMERIC))), 
+//																e().binOp("=").andOperands(resultVarDef.var(), e().literal("6").ofType(NUMERIC))),
+																e().binOp(resultVarDef.var(), EQL, e().literal("6").ofType(NUMERIC))),
 														BOOLEAN);
 		
 		assertTrue("Simple scalar multiplication test creation failed for B5 input and H5 output", 

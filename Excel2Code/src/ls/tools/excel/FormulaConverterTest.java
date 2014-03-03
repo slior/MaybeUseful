@@ -3,6 +3,7 @@ package ls.tools.excel;
 
 import static fj.data.List.list;
 import static ls.tools.excel.CellType.NUMERIC;
+import static ls.tools.excel.model.BinaryOp.MULT;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.excel.model.Functions.param;
@@ -14,7 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import ls.tools.excel.model.Function;
-import ls.tools.excel.model.Functions;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -30,7 +30,7 @@ public final class FormulaConverterTest
 {
 
 	private static final String CUBE_SQRT = "cube_sqrt";
-	private static final String MULT_OP = "*";
+//	private static final String MULT_OP = "*";
 	private static final String B3 = "B3";
 	private static final String C3 = "C3";
 	private static final String D3 = "D3";
@@ -64,9 +64,11 @@ public final class FormulaConverterTest
 	{
 		return list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
-						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
-							e().var(B3).ofType(NUMERIC), 
-							e().var(C3).ofType(NUMERIC))), NUMERIC));
+//						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
+//							e().var(B3).ofType(NUMERIC), 
+//							e().var(C3).ofType(NUMERIC))), NUMERIC));
+						e().binOp(e().var(B3).ofType(NUMERIC),MULT,e().var(C3).ofType(NUMERIC))),
+				NUMERIC));
 	}
 	
 	
@@ -86,7 +88,8 @@ public final class FormulaConverterTest
 		return list(createFunction(TIMES2,list(param(B3,NUMERIC)),
 																	e().sequence(
 																			e().bindingOf(localVar0).to(e().literal("2").ofType(NUMERIC)),
-																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)), 
+//																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)),
+																			e().binOp(e().var(B3).ofType(NUMERIC),MULT,localVar0)),
 																	NUMERIC));
 	}
 	
@@ -95,11 +98,11 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		final List<Function> expected = list(createFunction(SQUARE,list(param(B3,NUMERIC)), 
-																				e().sequence(
-																						e().binOp(MULT_OP).ofType(NUMERIC)
-																							.andOperands(
-																								e().var(B3).ofType(NUMERIC), 
-																								e().var(B3).ofType(NUMERIC))), NUMERIC));
+																				e().sequence(e().binOp(e().var(B3).ofType(NUMERIC), MULT,e().var(B3).ofType(NUMERIC))), NUMERIC));
+//																						e().binOp(MULT_OP).ofType(NUMERIC)
+//																							.andOperands(
+//																								e().var(B3).ofType(NUMERIC), 
+//																								e().var(B3).ofType(NUMERIC))), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 
@@ -116,10 +119,10 @@ public final class FormulaConverterTest
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
 		final VarExpr d3Var = e().var(D3).ofType(NUMERIC);
 		return list(createFunction(SQUARE,list(param(B3,NUMERIC)),
-												e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
+												e().sequence(e().binOp(b3Var, MULT, b3Var)), NUMERIC),
 					createFunction(CUBE,list(param(B3,NUMERIC)),
 												e().sequence(e().bindingOf(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),
-															 e().binOp(MULT_OP).ofType(NUMERIC).andOperands(d3Var,b3Var)), NUMERIC));
+															 e().binOp(d3Var,MULT,b3Var)), NUMERIC));
 	}
 	
 	

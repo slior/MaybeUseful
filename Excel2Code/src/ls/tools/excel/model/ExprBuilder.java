@@ -121,10 +121,37 @@ public final class ExprBuilder
 	}
 
 	
+	public BinOpExpr binOp(final Expr e1, final BinaryOp op, final Expr e2)
+	{
+		return new BinOpExpr()
+		{
+			
+			@Override public CellType type() { return op.type(); }
+			@Override public List<Expr> subExpressions() { return list(e1,e2); }
+			@Override public String op() { return op.operator(); }
+			@Override public boolean equals(final Object that)
+			{
+				if (this == that) return true;
+				if (that == null) return false;
+				if (!(that instanceof BinOpExpr)) return false;
+				final BinOpExpr boe = (BinOpExpr)that;
+				return 	equal(type(),boe.type()) &&
+						equal(op(),boe.op()) &&
+						listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+			}
+
+			@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
+			@Override public String toString() { return "(" + e1.toString() + ") " + op() + " (" + e2.toString() + ")"; }
+			
+			
+		};
+	}
+	
 	/**
-	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code> 
+	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code>
+	 * @deprecated Use {@link #binOp(Expr, BinaryOp, Expr)} instead - safer
 	 */
-	//TODO: the operators should move to be an enum, a set of predefined functions
+	@Deprecated
 	public BinOpBuilder binOp(final String _op)
 	{
 		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
