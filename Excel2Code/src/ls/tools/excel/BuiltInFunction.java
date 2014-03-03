@@ -3,10 +3,11 @@ package ls.tools.excel;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
 import static ls.tools.excel.CellType.NUMERIC;
-import static ls.tools.excel.FunctionImpl.create;
-import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 import fj.F;
 import fj.data.List;
@@ -19,7 +20,7 @@ public enum BuiltInFunction implements Function
 
 	private BuiltInFunction(final String _name, final List<Param> _params, final CellType ret)
 	{
-		this.func = create(_name, _params, e().sequence(), ret);
+		this.func = createFunction(_name, _params, e().sequence(), ret);
 	}
 
 	@Override public List<Param> parameters() { return func.parameters(); }

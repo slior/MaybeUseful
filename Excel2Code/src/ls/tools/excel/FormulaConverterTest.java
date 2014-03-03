@@ -2,16 +2,19 @@ package ls.tools.excel;
 
 
 import static fj.data.List.list;
-import static org.junit.Assert.*;
 import static ls.tools.excel.CellType.NUMERIC;
-import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
 import static ls.tools.fj.Util.listsEqual;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import ls.tools.excel.model.Function;
+import ls.tools.excel.model.Functions;
 import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -59,7 +62,7 @@ public final class FormulaConverterTest
 
 	public List<Function> simple2CellMultExpectedResult()
 	{
-		return list(FunctionImpl.create(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
+		return list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
 						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
 							e().var(B3).ofType(NUMERIC), 
@@ -80,7 +83,7 @@ public final class FormulaConverterTest
 	public List<Function> simpleScalarMultExpectedResult()
 	{
 		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
-		return list(FunctionImpl.create(TIMES2,list(param(B3,NUMERIC)),
+		return list(createFunction(TIMES2,list(param(B3,NUMERIC)),
 																	e().sequence(
 																			e().bindingOf(localVar0).to(e().literal("2").ofType(NUMERIC)),
 																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)), 
@@ -91,7 +94,7 @@ public final class FormulaConverterTest
 	public void singleParamUsedTwice()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
-		final List<Function> expected = list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)), 
+		final List<Function> expected = list(createFunction(SQUARE,list(param(B3,NUMERIC)), 
 																				e().sequence(
 																						e().binOp(MULT_OP).ofType(NUMERIC)
 																							.andOperands(
@@ -112,9 +115,9 @@ public final class FormulaConverterTest
 	{
 		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
 		final VarExpr d3Var = e().var(D3).ofType(NUMERIC);
-		return list(FunctionImpl.create(SQUARE,list(param(B3,NUMERIC)),
+		return list(createFunction(SQUARE,list(param(B3,NUMERIC)),
 												e().sequence(e().binOp(MULT_OP).ofType(NUMERIC).andOperands(b3Var, b3Var)), NUMERIC),
-					FunctionImpl.create(CUBE,list(param(B3,NUMERIC)),
+					createFunction(CUBE,list(param(B3,NUMERIC)),
 												e().sequence(e().bindingOf(d3Var).to(e().invocationOf(SQUARE).ofType(NUMERIC).withArgs(b3Var)),
 															 e().binOp(MULT_OP).ofType(NUMERIC).andOperands(d3Var,b3Var)), NUMERIC));
 	}
@@ -127,7 +130,7 @@ public final class FormulaConverterTest
 		final VarExpr b3 = e().var(B3).ofType(NUMERIC);
 		final VarExpr e3 = e().var(E3).ofType(NUMERIC);
 		
-		final Function lastFunc = FunctionImpl.create(CUBE_SQRT, list(param(B3,NUMERIC)),
+		final Function lastFunc = createFunction(CUBE_SQRT, list(param(B3,NUMERIC)),
 												e().sequence(
 														e().bindingOf(e3).to(e().invocationOf(CUBE).ofType(NUMERIC).withArgs(b3)),
 														e().invocationOf(BuiltInFunction.SQRT).withArgs(e3))

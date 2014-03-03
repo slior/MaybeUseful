@@ -1,7 +1,6 @@
-package ls.tools.excel;
+package ls.tools.excel.model;
 
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Param;
+import ls.tools.excel.CellType;
 import fj.data.List;
 
 public interface Function

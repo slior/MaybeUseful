@@ -1,8 +1,8 @@
 package ls.tools.excel.serialize.js;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import ls.tools.excel.Function;
 import ls.tools.excel.FunctionFormatter;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 import fj.F;
 import fj.F2;

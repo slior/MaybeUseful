@@ -1,5 +1,5 @@
 // $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
-package ls.tools.excel;
+package ls.tools.excel.model;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -11,8 +11,7 @@ import static java.util.Objects.hash;
 import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import static ls.tools.fj.Util.notEmpty;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Param;
+import ls.tools.excel.CellType;
 import fj.F;
 import fj.F2;
 import fj.P2;
@@ -66,12 +65,12 @@ final class FunctionImpl implements Function
 	static Function create(final String _funcName, final List<Param> params, final Expr _body, final CellType ret) { return new FunctionImpl(_funcName,params, _body, ret); }
 	
 	
-	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body)
-	{
-		this(_funcName,_paramList,_body,_body.type());
-	}
+//	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body)
+//	{
+//		this(_funcName,_paramList,_body,_body.type());
+//	}
 	
-	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body, final CellType ret)
+	FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body, final CellType ret)
 	{
 		this.name = checkNotNull(_funcName);
 		

@@ -2,7 +2,7 @@ package ls.tools.excel.serialize.js;
 
 import static org.junit.Assert.assertEquals;
 import ls.tools.excel.FormulaConverterTest;
-import ls.tools.excel.Function;
+import ls.tools.excel.model.Function;
 
 import org.junit.Before;
 import org.junit.Test;

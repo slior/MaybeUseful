@@ -9,7 +9,6 @@ import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import static ls.tools.fj.Util.notEmpty;
 import ls.tools.excel.CellType;
-import ls.tools.excel.Function;
 import ls.tools.fj.Util;
 import fj.F2;
 import fj.P2;

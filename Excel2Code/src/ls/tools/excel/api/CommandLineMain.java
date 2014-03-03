@@ -16,8 +16,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import ls.tools.excel.FormulaConverter;
-import ls.tools.excel.Function;
 import ls.tools.excel.FunctionFormatter;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.serialize.js.JSFormatter;
 
 import org.apache.commons.cli.BasicParser;

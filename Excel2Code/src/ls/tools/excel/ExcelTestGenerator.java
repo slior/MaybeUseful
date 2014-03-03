@@ -2,10 +2,12 @@ package ls.tools.excel;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.fj.Util.notEmpty;
 import ls.tools.excel.model.BinOpExpr;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 
 import org.apache.poi.ss.util.CellReference;
@@ -43,7 +45,7 @@ final class ExcelTestGenerator
 							 	  .to(e().invocationOf(funcToTest).withArgs(argValues));
 		final BinOpExpr comparison = e().binOp("=").andOperands(result.var(), e().literal(expected).ofType(result.var().type()));
 		final List<Param> noParams = List.nil();
-		return FunctionImpl.create("test_" + funcToTest.name() + "_" + expectedOutputCell, noParams, e().sequence(result,comparison), CellType.BOOLEAN);
+		return createFunction("test_" + funcToTest.name() + "_" + expectedOutputCell, noParams, e().sequence(result,comparison), CellType.BOOLEAN);
 	}
 
 	private String cellValue(final String sheetName, final String cellRefFormula)

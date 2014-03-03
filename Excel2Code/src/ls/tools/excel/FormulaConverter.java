@@ -10,8 +10,9 @@ import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.CellType.fromSSCellType;
-import static ls.tools.excel.FunctionImpl.param;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
 import static ls.tools.fj.Util.notEmpty;
 import static org.apache.poi.ss.formula.FormulaParser.parse;
 
@@ -19,6 +20,7 @@ import java.util.Stack;
 
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.model.FunctionExpr;
 import ls.tools.excel.model.Param;
 import ls.tools.excel.model.VarExpr;
@@ -119,7 +121,7 @@ public final class FormulaConverter
 	private List<Function> createFunctionsFor(final String name)
 	{
 		final Expr body = e().sequence(bodySeq);
-		return generatedFunctions.snoc(FunctionImpl.create(name,paramList(),body,body.type()));
+		return generatedFunctions.snoc(createFunction(name,paramList(),body,body.type()));
 	}
 
 	

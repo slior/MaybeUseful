@@ -1,5 +1,6 @@
 package ls.tools.excel;
 
+import ls.tools.excel.model.Function;
 import fj.data.List;
 
 public interface FunctionFormatter

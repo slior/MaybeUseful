@@ -1,5 +1,6 @@
 package ls.tools.excel;
 
+import ls.tools.excel.model.Function;
 import fj.F2;
 
 final class FunctionEqlPredicate extends F2<Function, Function, Boolean>

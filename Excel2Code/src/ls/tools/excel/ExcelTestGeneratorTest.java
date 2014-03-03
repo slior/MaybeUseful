@@ -5,6 +5,7 @@ import static fj.data.List.nil;
 import static ls.tools.excel.CellType.BOOLEAN;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
 import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
@@ -12,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import ls.tools.excel.model.Binding;
+import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -52,7 +54,7 @@ public class ExcelTestGeneratorTest
 		
 		final Binding resultVarDef = e().bindingOf(e().var(EXPECTED_RESULT_VAR_NAME).ofType(scalarMultFunc.returnType()))
 				   				  		.to(e().invocationOf(scalarMultFunc).withArgs(e().literal("3").ofType(NUMERIC)));
-		final Function expected = FunctionImpl.create("test_" + scalarMultFunc.name() + "_" + H5, NO_PARAMS , 
+		final Function expected = createFunction("test_" + scalarMultFunc.name() + "_" + H5, NO_PARAMS , 
 														e().sequence(
 																resultVarDef,
 																e().binOp("=").andOperands(resultVarDef.var(), e().literal("6").ofType(NUMERIC))), 
