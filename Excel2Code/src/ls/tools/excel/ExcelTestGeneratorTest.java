@@ -58,7 +58,6 @@ public class ExcelTestGeneratorTest
 		final Function expected = createFunction("test_" + scalarMultFunc.name() + "_" + H5, NO_PARAMS , 
 														e().sequence(
 																resultVarDef,
-//																e().binOp("=").andOperands(resultVarDef.var(), e().literal("6").ofType(NUMERIC))),
 																e().binOp(resultVarDef.var(), EQL, e().literal("6").ofType(NUMERIC))),
 														BOOLEAN);
 		

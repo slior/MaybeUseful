@@ -153,7 +153,6 @@ public final class FormulaConverter
 				if (resultStack.size() < 2) throw new IllegalStateException("Binary operator must have at least two operands.");
 				final Expr op2 = resultStack.pop();
 				final Expr op1 = resultStack.pop();
-//				resultStack.push(addToBody(e().binOp(op(token)).ofType(NUMERIC).andOperands(op1,op2)));
 				resultStack.push(addToBody(e().binOp(op1,op(token),op2)));
 			}
 			else if (isFuncCall(token))

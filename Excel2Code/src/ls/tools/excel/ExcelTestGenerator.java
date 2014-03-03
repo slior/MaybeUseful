@@ -44,7 +44,6 @@ final class ExcelTestGenerator
 		
 		final Binding result = e().bindingOf(e().var("result").ofType(funcToTest.returnType()))
 							 	  .to(e().invocationOf(funcToTest).withArgs(argValues));
-//		final BinOpExpr comparison = e().binOp("=").andOperands(result.var(), e().literal(expected).ofType(result.var().type()));
 		final BinOpExpr comparison = e().binOp(result.var(), EQL, e().literal(expected).ofType(result.var().type()));
 		final List<Param> noParams = List.nil();
 		return createFunction("test_" + funcToTest.name() + "_" + expectedOutputCell, noParams, e().sequence(result,comparison), CellType.BOOLEAN);

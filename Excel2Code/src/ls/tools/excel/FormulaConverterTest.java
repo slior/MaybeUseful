@@ -30,7 +30,6 @@ public final class FormulaConverterTest
 {
 
 	private static final String CUBE_SQRT = "cube_sqrt";
-//	private static final String MULT_OP = "*";
 	private static final String B3 = "B3";
 	private static final String C3 = "C3";
 	private static final String D3 = "D3";
@@ -64,9 +63,6 @@ public final class FormulaConverterTest
 	{
 		return list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
 				e().sequence(
-//						e().binOp(MULT_OP).ofType(NUMERIC).andOperands(
-//							e().var(B3).ofType(NUMERIC), 
-//							e().var(C3).ofType(NUMERIC))), NUMERIC));
 						e().binOp(e().var(B3).ofType(NUMERIC),MULT,e().var(C3).ofType(NUMERIC))),
 				NUMERIC));
 	}
@@ -88,7 +84,6 @@ public final class FormulaConverterTest
 		return list(createFunction(TIMES2,list(param(B3,NUMERIC)),
 																	e().sequence(
 																			e().bindingOf(localVar0).to(e().literal("2").ofType(NUMERIC)),
-//																			e().binOp(MULT_OP).ofType(NUMERIC).andOperands(e().var(B3).ofType(NUMERIC),localVar0)),
 																			e().binOp(e().var(B3).ofType(NUMERIC),MULT,localVar0)),
 																	NUMERIC));
 	}
@@ -99,10 +94,6 @@ public final class FormulaConverterTest
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		final List<Function> expected = list(createFunction(SQUARE,list(param(B3,NUMERIC)), 
 																				e().sequence(e().binOp(e().var(B3).ofType(NUMERIC), MULT,e().var(B3).ofType(NUMERIC))), NUMERIC));
-//																						e().binOp(MULT_OP).ofType(NUMERIC)
-//																							.andOperands(
-//																								e().var(B3).ofType(NUMERIC), 
-//																								e().var(B3).ofType(NUMERIC))), NUMERIC));
 		assertTrue(listsEqual(result, expected, funcEqPredicate));
 	}
 
