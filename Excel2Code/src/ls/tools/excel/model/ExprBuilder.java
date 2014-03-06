@@ -205,7 +205,7 @@ public final class ExprBuilder
 	{
 		FunctionInvocationBuilder ofType(CellType t);
 		FunctionExpr withArgs(Expr... args );
-		FunctionExpr withArgs(List<Expr> args);
+		FunctionExpr withArgs(List<? extends Expr> args);
 	}
 	
 	public FunctionInvocationBuilder invocationOf(final String funcName)
@@ -219,7 +219,7 @@ public final class ExprBuilder
 			{
 				final List<Expr> args;
 				@SuppressWarnings("unchecked")
-				FunctionExprImpl(final List<Expr> _args) { this.args = (List<Expr>) (_args == null ? List.nil() : _args); }
+				FunctionExprImpl(final List<? extends Expr> _args) { this.args = (List<Expr>) (_args == null ? List.nil() : _args); }
 				
 				@Override public String functionName() { return funcName; }
 				@Override public List<Expr> args() { return args; }
@@ -243,7 +243,7 @@ public final class ExprBuilder
 			}
 			
 			@Override public FunctionExpr withArgs(final Expr... _args) { return new FunctionExprImpl(List.list(_args)); }
-			@Override public FunctionExpr withArgs(final List<Expr> args) { return new FunctionExprImpl(args); }
+			@Override public FunctionExpr withArgs(final List<? extends Expr> args) { return new FunctionExprImpl(args); }
 			
 			@Override public FunctionInvocationBuilder ofType(final CellType t)
 			{
