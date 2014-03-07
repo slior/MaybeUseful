@@ -3,7 +3,6 @@ package ls.tools.excel;
 import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.BOOLEAN;
-import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.model.BinaryOp.EQL;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;

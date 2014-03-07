@@ -215,13 +215,6 @@ public final class FormulaConverter
 		return !typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
 	}
 
-
-//	private String op(final Ptg token)
-//	{
-//		if (token instanceof MultiplyPtg) return "*";
-//		else throw new IllegalArgumentException("Can't resolve operator for token: " + token.toFormulaString());
-//	}
-
 	private BinaryOp op(final Ptg token)
 	{
 		if (token instanceof MultiplyPtg) return BinaryOp.MULT;
