@@ -58,7 +58,7 @@ public class ExcelTestGeneratorTest
 		final Function scalarMultFunc = new FormulaConverterTest().simpleScalarMultExpectedResult().head();
 		final Function testFunc = testGenerator.generateTestFuncFor(scalarMultFunc,SHEET1,list(B5),H5);
 		
-		final Function expected = generateExpectedTestFunctionFor(scalarMultFunc, list(e().literal("3").ofType(NUMERIC)), e().literal("6").ofType(NUMERIC), H5);
+		final Function expected = generateExpectedTestFunctionFor(scalarMultFunc, list(e().numericLiteral(3)), e().numericLiteral(6), H5);
 		
 		assertTrue("Simple scalar multiplication test creation failed for B5 input and H5 output", 
 					functionsEqual.f(testFunc, expected));
@@ -82,11 +82,11 @@ public class ExcelTestGeneratorTest
 		
 		@SuppressWarnings("unchecked")
 		final List<List<LiteralExpr>> inputValues = list(
-														list(e().literal("1").ofType(NUMERIC)),
-														list(e().literal("3").ofType(NUMERIC)));
+														list(e().numericLiteral(1)),
+														list(e().numericLiteral(3)));
 		final List<LiteralExpr> expectedOutputs = list(
-														e().literal("2").ofType(NUMERIC),
-														e().literal("6").ofType(NUMERIC));
+														e().numericLiteral(2),
+														e().numericLiteral(6));
 		
 		final List<P2<P2<List<LiteralExpr>, LiteralExpr>, String>> testCases = inputValues.zip(expectedOutputs).zip(expectedOutputCells);
 		final List<Function> expectedFunctions = testCases.map(new F<P2<P2<List<LiteralExpr>,LiteralExpr>,String>, Function>() {

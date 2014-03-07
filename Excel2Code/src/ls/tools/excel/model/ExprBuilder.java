@@ -77,6 +77,38 @@ public final class ExprBuilder
 		LiteralExpr ofType(CellType type);
 	}
 	
+	private static class LiteralExprImpl implements LiteralExpr
+	{
+		private final String val;
+		private final CellType type;
+
+		LiteralExprImpl(final String _val, final CellType _type) 
+		{ 
+			checkArgument(_val != null,"Literal value can't be null");
+			
+			this.val = _val; 
+			this.type = _type;
+		}
+		
+		LiteralExprImpl(final boolean _val) { this(String.valueOf(_val),CellType.BOOLEAN); }
+		LiteralExprImpl(final Number _val) { this(String.valueOf(_val),CellType.NUMERIC); }
+
+		@Override public CellType type() { return type; }
+		@Override public String value() { return val; }
+		
+		@Override
+		public boolean equals(Object that)
+		{
+			if (this == that) return true;
+			if (that == null) return false;
+			if (!(that instanceof LiteralExpr)) return false;
+			final LiteralExpr le = (LiteralExpr)that;
+			return equal(type(),le.type()) && equal(value(),le.value());
+		}
+
+		@Override public int hashCode() { return hash(type(),value()); }
+		@Override public String toString() { return value(); }
+	} //end of LiteralExprImpl class
 	/**
 	 * Enables <code>e().literal("val").ofType("type");</code>
 	 */
@@ -87,31 +119,25 @@ public final class ExprBuilder
 			@Override public LiteralExpr ofType(final CellType type)
 			{
 				checkArgument(type != null,"type can't be null");
-				return new LiteralExpr() {
-
-					@Override public CellType type() { return type; }
-
-					@Override
-					public String value() { return val; }
-
-					@Override
-					public boolean equals(Object that)
-					{
-						if (this == that) return true;
-						if (that == null) return false;
-						if (!(that instanceof LiteralExpr)) return false;
-						final LiteralExpr le = (LiteralExpr)that;
-						return equal(type(),le.type()) && equal(value(),le.value());
-					}
-
-					@Override public int hashCode() { return hash(type(),value()); }
-					@Override public String toString() { return value(); }
-					
-					
-				};
+				return new LiteralExprImpl(val, type);
 			}
 		};
 	}
+	
+	/**
+	 * A syntactic sugar for <code>literal("num").ofType(NUMERIC)</code>
+	 * @param num The number for the literal
+	 * @return A new {@link LiteralExpr}.
+	 * @see #literal(String)
+	 */
+	public LiteralExpr numericLiteral(final Number num) { return new LiteralExprImpl(num); }
+	/**
+	 * A syntactic sugar for <code>literal("boolean value").ofType(BOOLEAN)</code>
+	 * @param b The boolean value for the literal
+	 * @return A new {@link LiteralExpr}
+	 * @see #literal(String)
+	 */
+	public LiteralExpr booleanLiteral(final boolean b) { return new LiteralExprImpl(b); }
 	//----
 	
 	public interface BinOpBuilder
