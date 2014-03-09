@@ -2,6 +2,8 @@ package ls.tools.excel;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
+import static ls.tools.excel.CellType.BOOLEAN;
+import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
@@ -14,7 +16,9 @@ import fj.data.List;
 
 public enum BuiltInFunction implements Function
 {
-	SQRT("SQRT",list(param("X",NUMERIC)),NUMERIC);
+	SQRT("SQRT",list(param("X",NUMERIC)),NUMERIC),
+	MOD("MOD",list(param("X",NUMERIC),param("DIVISOR",NUMERIC)),NUMERIC),
+	IF("IF",list(param("TEST",BOOLEAN),param("THEN",FORMULA),param("ELSE",FORMULA)),FORMULA);
 
 	private final Function func;
 

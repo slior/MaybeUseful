@@ -3,8 +3,10 @@ package ls.tools.excel.model;
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
+import static java.lang.String.format;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
+import static ls.tools.excel.CellType.BOOLEAN;
 import static ls.tools.fj.Util.genericEqualAndCast;
 import static ls.tools.fj.Util.listsEqual;
 import static ls.tools.fj.Util.notEmpty;
@@ -103,7 +105,11 @@ public final class ExprBuilder
 			if (that == null) return false;
 			if (!(that instanceof LiteralExpr)) return false;
 			final LiteralExpr le = (LiteralExpr)that;
-			return equal(type(),le.type()) && equal(value(),le.value());
+			final boolean sameType = equal(type(),le.type());
+			if (!sameType) return false;
+			return (type().equals(BOOLEAN)) ? 
+					equal(value().toLowerCase(),le.value().toLowerCase()) : 
+					equal(value(),le.value());
 		}
 
 		@Override public int hashCode() { return hash(type(),value()); }
@@ -229,27 +235,28 @@ public final class ExprBuilder
 	
 	public interface FunctionInvocationBuilder
 	{
-		FunctionInvocationBuilder ofType(CellType t);
 		FunctionExpr withArgs(Expr... args );
 		FunctionExpr withArgs(List<? extends Expr> args);
 	}
 	
-	public FunctionInvocationBuilder invocationOf(final String funcName)
+	
+	public FunctionInvocationBuilder invocationOf(final Function func)
 	{
-		checkArgument(Util.notEmpty(funcName),"Function name can't be empty");
+		checkArgument(func != null,"Function can't be null");
 		return new FunctionInvocationBuilder()
 		{
-			private CellType type;
-
 			final class FunctionExprImpl implements FunctionExpr
 			{
 				final List<Expr> args;
 				@SuppressWarnings("unchecked")
 				FunctionExprImpl(final List<? extends Expr> _args) { this.args = (List<Expr>) (_args == null ? List.nil() : _args); }
 				
-				@Override public String functionName() { return funcName; }
+				@Override public String functionName() { return func.name(); }
 				@Override public List<Expr> args() { return args; }
-				@Override public CellType type() { return type; }
+				@Override public CellType type() 
+				{ 
+					return func.returnType();
+				}
 				@Override public boolean equals(Object that)
 				{
 					if (this == that) return true;
@@ -270,21 +277,7 @@ public final class ExprBuilder
 			
 			@Override public FunctionExpr withArgs(final Expr... _args) { return new FunctionExprImpl(List.list(_args)); }
 			@Override public FunctionExpr withArgs(final List<? extends Expr> args) { return new FunctionExprImpl(args); }
-			
-			@Override public FunctionInvocationBuilder ofType(final CellType t)
-			{
-				checkArgument(t != null,"Type can't be null"); //should also check for validity of the type
-				type = t;
-				return this;
-			}
-
-			
 		};
-	}
-	
-	public FunctionInvocationBuilder invocationOf(final Function func)
-	{
-		return invocationOf(func.name()).ofType(func.returnType());
 	}
 
 	public interface BindBuilder
@@ -348,5 +341,58 @@ public final class ExprBuilder
 	public CompositeExpr sequence(final Expr... expressions) { return new CompositeSequence(list(expressions)); }
 	
 	public CompositeExpr sequence(final List<Expr> expressions) { return new CompositeSequence(expressions); }
+
+	//----
+	public interface BranchBuilder
+	{
+		BranchBuilder ifTrue(Expr e);
+		BranchExpr ifFalse(Expr e);
+	}
+	
+	public BranchBuilder test(final Expr testExpr)
+	{
+		checkArgument(testExpr != null,"Test expression can't be null");
+		checkArgument(testExpr.type().equals(BOOLEAN),"Test expression must boolean");
+		
+		return new BranchBuilder() {
+
+			Expr trueExpr;
+			@Override public BranchBuilder ifTrue(final Expr e)
+			{
+				checkArgument(e != null,"True expression can't be null");
+				trueExpr = e;
+				return this;
+			}
+
+			@Override public BranchExpr ifFalse(final Expr e)
+			{
+				checkArgument(e != null,"False expression can't be null");
+				checkArgument(e.type().equals(trueExpr.type()),"True and False result expression must have the same type");
+				return new BranchExpr() {
+
+					@Override public Expr test() { return testExpr; }
+					@Override public Expr whenTrue() { return trueExpr; }
+					@Override public Expr whenFalse() { return e; }
+					@Override
+					public boolean equals(Object that)
+					{
+						final P2<Boolean,BranchExpr> genResult = genericEqualAndCast(this, that, BranchExpr.class);
+						if (!genResult._1()) return false;
+						final BranchExpr thatBranch = genResult._2();
+						return test().equals(thatBranch.test()) &&
+								whenTrue().equals(thatBranch.whenTrue()) &&
+								whenFalse().equals(thatBranch.whenFalse());
+					}
+					
+					@Override public int hashCode() { return hash(test()) + hash(whenTrue()) + hash(whenFalse()); }
+					@Override public String toString()
+					{
+						return format("if (%1$s) then (%2$s) else (%3$s)", test().toString(),whenTrue().toString(),whenFalse().toString());
+					}
+					
+					@Override public CellType type() { return whenTrue().type(); } //must be the same as the false branch;
+				};
+			}};
+	}
 
 }

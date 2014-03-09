@@ -13,7 +13,6 @@ import ls.tools.excel.model.FunctionExpr;
 import ls.tools.excel.model.LiteralExpr;
 import ls.tools.excel.model.VarExpr;
 import fj.F2;
-import fj.data.List;
 
 final class JSExpressionSerializer 
 {
@@ -98,14 +97,18 @@ final class JSExpressionSerializer
 	private String serialize(CompositeExpr ce) 
 	{
 		checkArgument(ce != null,"Composite expression can't be null");
-		final List<Expr> allButLast = ce.subExpressions().take(ce.subExpressions().length()-1);
 		return format(BLOCK_PATTERN,
-				allButLast.foldLeft(new F2<String,Expr,String>() {
+				ce.subExpressions().foldLeft(new F2<String,Expr,String>() {
 					@Override public String f(String accum, Expr e) {
 						return accum + NL + serialize(e) + ";";
 					}
 				}, ""),
-				serialize(ce.subExpressions().last()) + ";");
+				serialize(evaluationOf(ce.subExpressions().last())) + ";");
+	}
+
+	private Expr evaluationOf(Expr e) //TODO: code smell: this should be encapsulated in the expression definition
+	{
+		return (e instanceof Binding) ? ((Binding)e).var() : e;
 	}
 	
 

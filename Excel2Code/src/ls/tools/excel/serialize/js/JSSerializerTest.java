@@ -30,7 +30,8 @@ public class JSSerializerTest
 		
 		final String expected = "function times2(B3) {" +  
 								"var _0 = 2;" +  
-								"return B3 * _0;" +  
+								"var _1 = B3 * _0;" + 
+								"return _1;" +  
 								"}";
 		
 		System.out.println("Result:\n" + result);
@@ -44,7 +45,8 @@ public class JSSerializerTest
 		final String result = formatter.format(functions.head());
 		
 		final String expected = "function mult(C3,B3) {"
-								+ "return B3 * C3;"
+								+ "var _0 = B3 * C3;"
+								+ "return _0;"
 								+ "}";
 		
 		System.out.println("Result:\n" + result);

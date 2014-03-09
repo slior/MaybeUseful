@@ -1,5 +1,12 @@
 package ls.tools.excel;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.apache.poi.ss.formula.ptg.BoolPtg;
+import org.apache.poi.ss.formula.ptg.IntPtg;
+import org.apache.poi.ss.formula.ptg.NumberPtg;
+import org.apache.poi.ss.formula.ptg.ScalarConstantPtg;
+import org.apache.poi.ss.formula.ptg.StringPtg;
 import org.apache.poi.ss.usermodel.Cell;
 
 public enum CellType
@@ -24,5 +31,17 @@ public enum CellType
 			if (ct == v.code)
 				return v;
 		throw new IllegalArgumentException("Unrecognized cell type: " + ct);
+	}
+
+	static CellType literalTypeFrom(final ScalarConstantPtg token)
+	{
+		checkArgument(token != null,"Can't resolve cell type from null token");
+		if (token instanceof IntPtg || token instanceof NumberPtg)
+			return NUMERIC;
+		else if (token instanceof BoolPtg)
+			return BOOLEAN;
+		else if (token instanceof StringPtg)
+			return STRING;
+		else throw new IllegalArgumentException("Unrecognized type of scalar token");
 	}
 } //end of CellTypeEnum

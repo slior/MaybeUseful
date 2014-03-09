@@ -8,7 +8,6 @@ import static fj.Equal.equal;
 import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
-import static ls.tools.excel.CellType.NUMERIC;
 import static ls.tools.excel.CellType.fromSSCellType;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
@@ -28,11 +27,14 @@ import ls.tools.excel.model.VarExpr;
 
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
-import org.apache.poi.ss.formula.ptg.FuncPtg;
+import org.apache.poi.ss.formula.ptg.AbstractFunctionPtg;
+import org.apache.poi.ss.formula.ptg.BoolPtg;
+import org.apache.poi.ss.formula.ptg.EqualPtg;
 import org.apache.poi.ss.formula.ptg.IntPtg;
 import org.apache.poi.ss.formula.ptg.MultiplyPtg;
 import org.apache.poi.ss.formula.ptg.Ptg;
 import org.apache.poi.ss.formula.ptg.RefPtg;
+import org.apache.poi.ss.formula.ptg.ScalarConstantPtg;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -153,30 +155,29 @@ public final class FormulaConverter
 				if (resultStack.size() < 2) throw new IllegalStateException("Binary operator must have at least two operands.");
 				final Expr op2 = resultStack.pop();
 				final Expr op1 = resultStack.pop();
-				resultStack.push(addToBody(e().binOp(op1,op(token),op2)));
+				final Binding b = createBindingTo(e().binOp(evaluationOf(op1), op(token), evaluationOf(op2)));
+				resultStack.push(addToBody(b));
 			}
 			else if (isFuncCall(token))
 			{
 				final Binding b = createBindingToFunctionResult((RefPtg) token);
-				addToBody(b);
-				resultStack.push(b.var());
+				resultStack.push(evaluationOf(addToBody(b)));
 			}
 			else if (isBuiltInFunction(token))
 			{
-				final Function builtIn = builtInFunction(((FuncPtg)token).getName());
-				final List<VarExpr> args =  builtIn.parameters().map(new F<Param,VarExpr>() {
+				final Function builtIn = builtInFunction(((AbstractFunctionPtg)token).getName());
+				final List<Expr> args =  builtIn.parameters().map(new F<Param,Expr>() {
 					@Override
-					public VarExpr f(final Param a)
+					public Expr f(final Param a)
 					{
 						final Expr e = resultStack.pop(); //note: this changes state of algorithm, the stack is popped.
-						checkState(e instanceof VarExpr, "Arguments to built-in function must be variables. Found another expression on the stack: " + e.toString());
-						return (VarExpr)e;
-					}});
+						return evaluationOf(e);
+					}})
+					.reverse();
 				
-				//TODO: produce a local variable and binding for nested function calls?
-				final FunctionExpr fe = e().invocationOf(builtIn).withArgs(args.toArray().array(VarExpr[].class));
-				addToBody(fe);
-				resultStack.push(fe);
+				final FunctionExpr fe = e().invocationOf(builtIn).withArgs(args.toArray().array(Expr[].class));
+				final Binding b = createBindingTo(fe); 
+				resultStack.push(addToBody(b));
 			}
 			else if (isCellReference(token))
 			{
@@ -187,6 +188,14 @@ public final class FormulaConverter
 		
 	}
 
+	private Expr evaluationOf(final Expr e)
+	{
+		if (e instanceof Binding) //TODO: this distinction should be part of the expression interface - encapsulation
+			return ((Binding)e).var();
+		else 
+			return e;
+	}
+	
 
 	private Function builtInFunction(final String funcName)
 	{
@@ -199,15 +208,21 @@ public final class FormulaConverter
 	private boolean isBuiltInFunction(final Ptg token)
 	{
 		checkArgument(token != null,"Can't answer for a null token - is null a built in function?");
-		return token instanceof FuncPtg;
+		return token instanceof AbstractFunctionPtg;
 	}
 
 
 	private Binding createBindingToLiteral(Ptg token)
 	{
-		return e().bindingOf(e().var(newLocalVarName()).ofType(NUMERIC)).to(e().literal(token.toFormulaString()).ofType(NUMERIC));
+		checkArgument(token instanceof ScalarConstantPtg,"Illegal token for literal - should be a scalar");
+		final CellType type = CellType.literalTypeFrom((ScalarConstantPtg)token);
+		return createBindingTo(e().literal(token.toFormulaString()).ofType(type));
 	}
 
+	private Binding createBindingTo(final Expr e)
+	{
+		return e().bindingOf(e().var(newLocalVarName()).ofType(e.type())).to(e);
+	}
 	
 	private boolean isCellReference(Ptg token)
 	{
@@ -215,9 +230,10 @@ public final class FormulaConverter
 		return !typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
 	}
 
-	private BinaryOp op(final Ptg token)
-	{
+	private BinaryOp op(final Ptg token) //TODO: should unify this definition with that of #isBinaryOp
+	{ 
 		if (token instanceof MultiplyPtg) return BinaryOp.MULT;
+		else if (token instanceof EqualPtg) return BinaryOp.EQL;
 		else throw new IllegalArgumentException("Can't resolve operator for token: " + token.toFormulaString());
 	}
 
@@ -227,9 +243,15 @@ public final class FormulaConverter
 		return typeOfCellReferencedBy((RefPtg)token).equals(FORMULA); 
 	}
 
-	private boolean isBinaryOp(final Ptg token) { return token instanceof MultiplyPtg; }
+	private boolean isBinaryOp(final Ptg token) 
+	{ 
+		return (token instanceof MultiplyPtg) || (token instanceof EqualPtg); 
+	}
 
-	private boolean isLiteral(final Ptg token) { return token instanceof IntPtg; }
+	private boolean isLiteral(final Ptg token) 
+	{ 
+		return (token instanceof IntPtg) || (token instanceof BoolPtg); 
+	}
 
 
 	private void clearBodySeq() { bodySeq = nil(); }
@@ -298,6 +320,7 @@ public final class FormulaConverter
 	 * @param expr The expression to add
 	 * @return The expression given at input
 	 */
+	//TODO: code smell?
 	private Expr addToBody(final Expr expr)
 	{
 		checkArgument(expr != null,"expression can't be null in function body");
