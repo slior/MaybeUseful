@@ -34,15 +34,6 @@ public final class Util
 			@Override public B _2() { return b; }
 		};
 	}
-	
-	@SuppressWarnings("unchecked")
-	public static <T> P2<Boolean,T> genericEqualAndCast(Object a, Object b, Class<T> cls)
-	{
-		if (a == b) return pair(true,(T)b);
-		if (b == null) return pair(a == null,null);
-		if (!(cls.isAssignableFrom(b.getClass()))) return pair(false,null);
-		return pair(true,(T)b);
-	}
 
 	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
 	

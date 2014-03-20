@@ -2,7 +2,6 @@
 package ls.tools.excel.model;
 
 import fj.F;
-import fj.P2;
 import fj.data.List;
 import ls.tools.excel.CellType;
 
@@ -22,8 +21,7 @@ final class FunctionImpl implements Function
 	{
 		private final String name;
 		private final CellType type;
-//		ParamImpl(final P2<String, CellType> a) { this(a._1(),a._2()); }
-		
+
 		ParamImpl(final String name, final CellType type)
 		{
 			checkArgument(notEmpty(name),"Parameter name can't be empty");
@@ -36,8 +34,10 @@ final class FunctionImpl implements Function
 		@Override public CellType type() { return this.type; }
 		@Override public boolean equals(Object that) // $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
 		{
-			final P2<Boolean,ParamImpl> gr = genericEqualAndCast(this, that, ParamImpl.class);
-			return gr._1() && equal(name(),gr._2().name()) && equal(type(),gr._2().type());
+            return this == that ||
+                   that != null &&
+                   that instanceof Param &&
+                   equal(name(),((Param)that).name()) && equal(type(),((Param)that).type());
 		}
 		
 		@Override public int hashCode() { return hash(name()) + hash(type()); }

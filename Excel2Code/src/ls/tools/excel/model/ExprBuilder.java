@@ -1,10 +1,8 @@
 package ls.tools.excel.model;
 
 import fj.F2;
-import fj.P2;
 import fj.data.List;
 import ls.tools.excel.CellType;
-import ls.tools.fj.Util;
 
 import java.util.function.BiPredicate;
 
@@ -47,8 +45,10 @@ public final class ExprBuilder
 					@Override public String name() { return n; }
 					@Override public boolean equals(final Object that)
 					{
-						final P2<Boolean,VarExpr> gr = genericEqualAndCast(this, that, VarExpr.class);
-						return gr._1() && equal(type(), gr._2().type()) && equal(name(),gr._2().name());
+                        return this == that ||
+                                that != null &&
+                                that instanceof VarExpr &&
+                                equal(type(),((VarExpr)that).type()) && equal(name(),((VarExpr)that).name());
 					}
 
 					@Override public int hashCode() { return hash(this.name(),this.type()); }
@@ -105,14 +105,15 @@ public final class ExprBuilder
 	 */
 	public LiteralBuilder literal(final String val)
 	{
-		return new LiteralBuilder() {
-
-			@Override public LiteralExpr ofType(final CellType type)
-			{
-				checkArgument(type != null,"type can't be null");
-				return new LiteralExprImpl(val, type);
-			}
-		};
+        return (type) -> new LiteralExprImpl(val,type);
+//		return new LiteralBuilder() {
+//
+//			@Override public LiteralExpr ofType(final CellType type)
+//			{
+//				checkArgument(type != null,"type can't be null");
+//				return new LiteralExprImpl(val, type);
+//			}
+//		};
 	}
 	
 	/**
@@ -131,11 +132,11 @@ public final class ExprBuilder
 	public LiteralExpr booleanLiteral(final boolean b) { return new LiteralExprImpl(b); }
 	//----
 	
-	public interface BinOpBuilder
-	{
-		BinOpBuilder ofType(CellType type);
-		BinOpExpr andOperands(Expr e1,Expr e2);
-	}
+//	public interface BinOpBuilder
+//	{
+//		BinOpBuilder ofType(CellType type);
+//		BinOpExpr andOperands(Expr e1,Expr e2);
+//	}
 
 	
 	public BinOpExpr binOp(final Expr e1, final BinaryOp op, final Expr e2)
@@ -154,7 +155,6 @@ public final class ExprBuilder
 				final BinOpExpr boe = (BinOpExpr)that;
 				return 	equal(type(),boe.type()) &&
 						equal(op(),boe.op()) &&
-//						listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
                         listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
 			}
 
@@ -165,57 +165,57 @@ public final class ExprBuilder
 		};
 	}
 	
-	/**
-	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code>
-	 * @deprecated Use {@link #binOp(Expr, BinaryOp, Expr)} instead - safer
-	 */
-	@Deprecated
-	public BinOpBuilder binOp(final String _op)
-	{
-		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
-		return new BinOpBuilder()
-		{
-			final String op = _op;
-			CellType type;
-			
-			@Override
-			public BinOpBuilder ofType(final CellType _type)
-			{
-				checkArgument(_type != null, "type of operator can't be null");
-				type = _type;
-				return this;
-			}
-			
-			@Override
-			public BinOpExpr andOperands(final Expr e1, final Expr e2)
-			{
-				checkArgument(e1 != null,"Expression #1 can't be null");
-				checkArgument(e2 != null,"Expression #2 can't be null");
-				return new BinOpExpr()
-				{
-					
-					@Override public CellType type() { return type; }
-					@Override public List<Expr> subExpressions() { return list(e1,e2); }
-					@Override public String op() { return op; }
-					@Override public boolean equals(final Object that)
-					{
-						if (this == that) return true;
-						if (that == null) return false;
-						if (!(that instanceof BinOpExpr)) return false;
-						final BinOpExpr boe = (BinOpExpr)that;
-						return 	equal(type(),boe.type()) &&
-								equal(op(),boe.op()) &&
-								listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
-					}
-
-					@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
-					@Override public String toString() { return "(" + e1.toString() + ") " + op() + " (" + e2.toString() + ")"; }
-					
-					
-				};
-			}
-		};
-	}
+//	/**
+//	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code>
+//	 * @deprecated Use {@link #binOp(Expr, BinaryOp, Expr)} instead - safer
+//	 */
+//	@Deprecated
+//	public BinOpBuilder binOp(final String _op)
+//	{
+//		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
+//		return new BinOpBuilder()
+//		{
+//			final String op = _op;
+//			CellType type;
+//
+//			@Override
+//			public BinOpBuilder ofType(final CellType _type)
+//			{
+//				checkArgument(_type != null, "type of operator can't be null");
+//				type = _type;
+//				return this;
+//			}
+//
+//			@Override
+//			public BinOpExpr andOperands(final Expr e1, final Expr e2)
+//			{
+//				checkArgument(e1 != null,"Expression #1 can't be null");
+//				checkArgument(e2 != null,"Expression #2 can't be null");
+//				return new BinOpExpr()
+//				{
+//
+//					@Override public CellType type() { return type; }
+//					@Override public List<Expr> subExpressions() { return list(e1,e2); }
+//					@Override public String op() { return op; }
+//					@Override public boolean equals(final Object that)
+//					{
+//						if (this == that) return true;
+//						if (that == null) return false;
+//						if (!(that instanceof BinOpExpr)) return false;
+//						final BinOpExpr boe = (BinOpExpr)that;
+//						return 	equal(type(),boe.type()) &&
+//								equal(op(),boe.op()) &&
+//								listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+//					}
+//
+//					@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
+//					@Override public String toString() { return "(" + e1.toString() + ") " + op() + " (" + e2.toString() + ")"; }
+//
+//
+//				};
+//			}
+//		};
+//	}
 
 	//----
 	
@@ -286,8 +286,10 @@ public final class ExprBuilder
 					@Override public CellType type() { return expression().type(); }
 					@Override public boolean equals(Object that)
 					{
-						final P2<Boolean,Binding> genResult = genericEqualAndCast(this, that, Binding.class);
-						return genResult._1() && equal(var(), genResult._2().var()) && equal(expression(),genResult._2().expression());
+                        return this == that ||
+                               that != null &&
+                               that instanceof Binding &&
+                               equal(var(),((Binding)that).var()) && equal(expression(),((Binding)that).expression());
 					}
 					
 					@Override public int hashCode() { return hash(var()) + hash(expression()); }
@@ -310,8 +312,10 @@ public final class ExprBuilder
 		@Override public CellType type() { return subExpressions().last().type(); }
 		@Override public boolean equals(Object that)
 		{
-			final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
-			return genResult._1() && listsEql(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
+            return this == that ||
+                   that != null &&
+                   that instanceof CompositeExpr &&
+                   listsEql(subExpressions(),((CompositeExpr)that).subExpressions(),exprEqlPredicate);
 		}
 		
 		@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
@@ -360,12 +364,12 @@ public final class ExprBuilder
 					@Override
 					public boolean equals(Object that)
 					{
-						final P2<Boolean,BranchExpr> genResult = genericEqualAndCast(this, that, BranchExpr.class);
-						if (!genResult._1()) return false;
-						final BranchExpr thatBranch = genResult._2();
-						return test().equals(thatBranch.test()) &&
-								whenTrue().equals(thatBranch.whenTrue()) &&
-								whenFalse().equals(thatBranch.whenFalse());
+                        return this == that ||
+                                that != null &&
+                               that instanceof BranchExpr &&
+                               test().equals(((BranchExpr)that).test()) &&
+                               whenTrue().equals(((BranchExpr)that).whenTrue()) &&
+                               whenFalse().equals(((BranchExpr)that).whenFalse());
 					}
 					
 					@Override public int hashCode() { return hash(test()) + hash(whenTrue()) + hash(whenFalse()); }
