@@ -1,5 +1,13 @@
 package ls.tools.excel.model;
 
+import fj.F2;
+import fj.P2;
+import fj.data.List;
+import ls.tools.excel.CellType;
+import ls.tools.fj.Util;
+
+import java.util.function.BiPredicate;
+
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
@@ -7,35 +15,13 @@ import static java.lang.String.format;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
 import static ls.tools.excel.CellType.BOOLEAN;
-import static ls.tools.fj.Util.genericEqualAndCast;
-import static ls.tools.fj.Util.listsEqual;
-import static ls.tools.fj.Util.notEmpty;
-import ls.tools.excel.CellType;
-import ls.tools.fj.Util;
-import fj.F2;
-import fj.P2;
-import fj.data.List;
+import static ls.tools.fj.Util.*;
 
 public final class ExprBuilder
 {
 
-	private static class ExprEqualsPredicate extends F2<Expr,Expr,Boolean>
-	{
-
-		@Override
-		public Boolean f(final Expr a, final Expr b)
-		{
-			if (a == null) return b == null;
-			return a.equals(b);
-		}
-		
-	}
-	
-	private static final ExprEqualsPredicate exprEqlPredicate = new ExprEqualsPredicate();
-	
-	private ExprBuilder() {
-		
-	};
+	private static final BiPredicate<Expr,Expr> exprEqlPredicate = nullCheckingEqualPredicate();
+	private ExprBuilder() { }
 	
 	private static final ExprBuilder mainBuilderInstance = new ExprBuilder(); 
 	public static ExprBuilder e() { return mainBuilderInstance; } //we can do it this way since it doesn't hold any state
@@ -106,8 +92,7 @@ public final class ExprBuilder
 			if (!(that instanceof LiteralExpr)) return false;
 			final LiteralExpr le = (LiteralExpr)that;
 			final boolean sameType = equal(type(),le.type());
-			if (!sameType) return false;
-			return (type().equals(BOOLEAN)) ? 
+			return sameType && (type().equals(BOOLEAN)) ?
 					equal(value().toLowerCase(),le.value().toLowerCase()) : 
 					equal(value(),le.value());
 		}
@@ -169,7 +154,8 @@ public final class ExprBuilder
 				final BinOpExpr boe = (BinOpExpr)that;
 				return 	equal(type(),boe.type()) &&
 						equal(op(),boe.op()) &&
-						listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+//						listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+                        listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
 			}
 
 			@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
@@ -219,7 +205,7 @@ public final class ExprBuilder
 						final BinOpExpr boe = (BinOpExpr)that;
 						return 	equal(type(),boe.type()) &&
 								equal(op(),boe.op()) &&
-								listsEqual(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
+								listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
 					}
 
 					@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
@@ -263,7 +249,7 @@ public final class ExprBuilder
 					if (that == null) return false;
 					if (!(that instanceof FunctionExpr)) return false;
 					final FunctionExpr fe = (FunctionExpr)that;
-					return equal(functionName(),fe.functionName()) && equal(type(),fe.type()) && listsEqual(args(), fe.args(), exprEqlPredicate);
+					return equal(functionName(),fe.functionName()) && equal(type(),fe.type()) && listsEql(args(), fe.args(), exprEqlPredicate);
 				}
 
 				@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
@@ -301,8 +287,7 @@ public final class ExprBuilder
 					@Override public boolean equals(Object that)
 					{
 						final P2<Boolean,Binding> genResult = genericEqualAndCast(this, that, Binding.class);
-						if (!genResult._1()) return false;
-						return equal(var(), genResult._2().var()) && equal(expression(),genResult._2().expression());
+						return genResult._1() && equal(var(), genResult._2().var()) && equal(expression(),genResult._2().expression());
 					}
 					
 					@Override public int hashCode() { return hash(var()) + hash(expression()); }
@@ -326,8 +311,7 @@ public final class ExprBuilder
 		@Override public boolean equals(Object that)
 		{
 			final P2<Boolean,CompositeExpr> genResult = genericEqualAndCast(this, that, CompositeExpr.class);
-			if (!genResult._1()) return false;
-			return listsEqual(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
+			return genResult._1() && listsEql(subExpressions(), genResult._2().subExpressions(), exprEqlPredicate);
 		}
 		
 		@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }

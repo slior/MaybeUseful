@@ -1,37 +1,31 @@
 package ls.tools.excel;
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static fj.data.List.list;
-import static ls.tools.excel.BuiltInFunction.IF;
-import static ls.tools.excel.CellType.BOOLEAN;
-import static ls.tools.excel.CellType.FORMULA;
-import static ls.tools.excel.CellType.NUMERIC;
-import static ls.tools.excel.model.BinaryOp.MULT;
-import static ls.tools.excel.model.ExprBuilder.e;
-import static ls.tools.excel.model.Functions.createFunction;
-import static ls.tools.excel.model.Functions.param;
-import static ls.tools.fj.Util.listsEqual;
-import static ls.tools.fj.Util.notEmpty;
-import static org.junit.Assert.assertTrue;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
+import fj.data.List;
 import ls.tools.excel.model.BinaryOp;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.model.VarExpr;
-
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Before;
 import org.junit.Test;
 
-import fj.F2;
-import fj.data.List;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.function.BiPredicate;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static fj.data.List.list;
+import static ls.tools.excel.BuiltInFunction.IF;
+import static ls.tools.excel.CellType.*;
+import static ls.tools.excel.model.BinaryOp.MULT;
+import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
+import static ls.tools.fj.Util.*;
+import static org.junit.Assert.assertTrue;
 
 public final class FormulaConverterTest 
 {
@@ -48,10 +42,10 @@ public final class FormulaConverterTest
 	private static final String MULT_FUNC_NAME = "mult";
 	private XSSFWorkbook _wb;
 	private FormulaConverter fc;
-	private final F2<Function, Function, Boolean> funcEqPredicate = new FunctionEqlPredicate();
+    private final BiPredicate<Function,Function> funcEqPredicate = nullCheckingEqualPredicate();
 	
 	@Before 
-	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
+	public void prepareTest() throws InvalidFormatException, IOException
 	{
 		//!Assumption: it's an openxml format (xlsx, not xls)!
 		_wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
@@ -63,7 +57,7 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, MULT_FUNC_NAME);
 		final List<Function> expected = simple2CellMultExpectedResult();
-		assertTrue("Simple 2 cell multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
+		assertTrue("Simple 2 cell multiplication comparison failed.",listsEql(result, expected, funcEqPredicate));
 	}
 
 	public List<Function> simple2CellMultExpectedResult()
@@ -82,7 +76,7 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, TIMES2);
 		final List<Function> expected = simpleScalarMultExpectedResult();
-		assertTrue("Simple scalar multiplication comparison failed.",listsEqual(result, expected, funcEqPredicate ));
+		assertTrue("Simple scalar multiplication comparison failed.",listsEql(result, expected, funcEqPredicate));
 	}
 
 	public List<Function> simpleScalarMultExpectedResult()
@@ -102,7 +96,7 @@ public final class FormulaConverterTest
 		final List<Function> expected = list(createFunction(SQUARE,list(param(B3,NUMERIC)), 
 																				e().sequence(
 																						e().bindingOf(numericVar("_0")).to(e().binOp(e().var(B3).ofType(NUMERIC), MULT,e().var(B3).ofType(NUMERIC)))), NUMERIC));
-		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 
 	@Test
@@ -110,7 +104,7 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE);
 		final List<Function> expectedFunctions = cubeExpectedFunctions();
-		assertTrue(listsEqual(result, expectedFunctions, funcEqPredicate));
+		assertTrue(listsEql(result, expectedFunctions, funcEqPredicate));
 	}
 
 	private static List<Function> cubeExpectedFunctions()
@@ -140,7 +134,7 @@ public final class FormulaConverterTest
 														e().bindingOf(numericVar("_2")).to(e().invocationOf(BuiltInFunction.SQRT).withArgs(e3)))
 												, NUMERIC);
 		expected = expected.snoc(lastFunc);
-		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 	
 	@Test
@@ -161,7 +155,7 @@ public final class FormulaConverterTest
 								simple2CellMultExpected
 								.append(simpleScalarMultExpected)
 								.nub();
-		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 	
 	@Test
@@ -169,13 +163,13 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), TIMES2);
 		final List<Function> expected = simpleScalarMultExpectedResult();
-		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 	
 	@Test
-	public void convertIf() throws InvalidFormatException, FileNotFoundException, IOException
+	public void convertIf() throws InvalidFormatException, IOException
 	{
-		final XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test2.xlsx"));;
+		final XSSFWorkbook wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test2.xlsx"));
 		final List<Function> result = fc.formulasFromNamedCell(wb, "isEven");
 		//The result's body should be:
 //			_0 : NUMERIC = 2;
@@ -199,7 +193,7 @@ public final class FormulaConverterTest
 		final List<Function> expected = list(createFunction("isEven",list(param(B3, NUMERIC)),
 												e().sequence(_0,_1,_2,_3,_4,_5,_6),
 												FORMULA));
-		assertTrue(listsEqual(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 
 	private VarExpr booleanVar(final String varName)

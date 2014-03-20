@@ -1,6 +1,11 @@
 // $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
 package ls.tools.excel.model;
 
+import fj.F;
+import fj.P2;
+import fj.data.List;
+import ls.tools.excel.CellType;
+
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -8,14 +13,7 @@ import static fj.Show.listShow;
 import static fj.Show.showS;
 import static java.util.Arrays.deepHashCode;
 import static java.util.Objects.hash;
-import static ls.tools.fj.Util.genericEqualAndCast;
-import static ls.tools.fj.Util.listsEqual;
-import static ls.tools.fj.Util.notEmpty;
-import ls.tools.excel.CellType;
-import fj.F;
-import fj.F2;
-import fj.P2;
-import fj.data.List;
+import static ls.tools.fj.Util.*;
 
 final class FunctionImpl implements Function
 {
@@ -24,7 +22,7 @@ final class FunctionImpl implements Function
 	{
 		private final String name;
 		private final CellType type;
-		ParamImpl(final P2<String, CellType> a) { this(a._1(),a._2()); }
+//		ParamImpl(final P2<String, CellType> a) { this(a._1(),a._2()); }
 		
 		ParamImpl(final String name, final CellType type)
 		{
@@ -49,12 +47,7 @@ final class FunctionImpl implements Function
 	
 	static Param param(final String name, final CellType type) { return new ParamImpl(name,type); }
 	
-	private static final class NameTypePairToParam extends F<P2<String, CellType>, Param> { @Override public Param f(P2<String, CellType> a) { return new ParamImpl(a); } }
-	static final F<P2<String, CellType>, Param> NAME_TYPE_TO_PARAM = new NameTypePairToParam();
 	private static final F<Param,String> PARAM_TO_STRING = new F<Param,String>() {@Override public String f(Param p) { return p.toString(); }};
-	
-
-	
 
 	private final String name;
 	private final List<Param> params;
@@ -63,12 +56,6 @@ final class FunctionImpl implements Function
 	
 
 	static Function create(final String _funcName, final List<Param> params, final Expr _body, final CellType ret) { return new FunctionImpl(_funcName,params, _body, ret); }
-	
-	
-//	private FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body)
-//	{
-//		this(_funcName,_paramList,_body,_body.type());
-//	}
 	
 	FunctionImpl(final String _funcName, final List<Param> _paramList, final Expr _body, final CellType ret)
 	{
@@ -102,15 +89,8 @@ final class FunctionImpl implements Function
 
 	private boolean areSameParameters(final List<Param> list, final List<Param> list2)
 	{
-		return listsEqual(list, list2, new F2<Param,Param,Boolean>()
-		{
-			@Override public Boolean f(Param a, Param b)
-			{
-				if (a == null) return b == null;
-				return equal(a.name(),b.name()) && equal(a.type(),b.type());
-			}
-		});
-	}
+        return listsEql(list, list2, nullCheckingEqualPredicate());
+    }
 	
 	@Override public int hashCode() { return hash(name(),body(),returnType()) + deepHashCode(parameters().toArray().array()); }
 

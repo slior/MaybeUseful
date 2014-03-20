@@ -1,32 +1,31 @@
 package ls.tools.excel;
 
-import static fj.data.List.list;
-import static fj.data.List.nil;
-import static ls.tools.excel.CellType.BOOLEAN;
-import static ls.tools.excel.model.BinaryOp.EQL;
-import static ls.tools.excel.model.ExprBuilder.e;
-import static ls.tools.excel.model.Functions.createFunction;
-import static ls.tools.fj.Util.listsEqual;
-import static org.junit.Assert.assertTrue;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
+import fj.F;
+import fj.P2;
+import fj.data.List;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.model.LiteralExpr;
 import ls.tools.excel.model.Param;
-
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Before;
 import org.junit.Test;
 
-import fj.F;
-import fj.P2;
-import fj.data.List;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.function.BiPredicate;
+
+import static fj.data.List.list;
+import static fj.data.List.nil;
+import static ls.tools.excel.CellType.BOOLEAN;
+import static ls.tools.excel.model.BinaryOp.EQL;
+import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.fj.Util.listsEql;
+import static ls.tools.fj.Util.nullCheckingEqualPredicate;
+import static org.junit.Assert.assertTrue;
 
 public class ExcelTestGeneratorTest
 {
@@ -35,14 +34,14 @@ public class ExcelTestGeneratorTest
 	private static final String H5 = "H5";
 	private static final String SHEET1 = "Sheet1";
 	private static final String EXPECTED_RESULT_VAR_NAME = "result";
-	private static final FunctionEqlPredicate functionsEqual = new FunctionEqlPredicate();
+	private static final BiPredicate<Function,Function> functionsEqual = nullCheckingEqualPredicate();
 	private static final List<Param> NO_PARAMS = nil();
 	
 	private XSSFWorkbook _wb;
 	private ExcelTestGenerator testGenerator;
 	
 	@Before 
-	public void prepareTest() throws InvalidFormatException, FileNotFoundException, IOException
+	public void prepareTest() throws InvalidFormatException, IOException
 	{
 		//!Assumption: it's an openxml format (xlsx, not xls)!
 		_wb = (XSSFWorkbook) WorkbookFactory.create(new FileInputStream("test.xlsx"));
@@ -60,7 +59,7 @@ public class ExcelTestGeneratorTest
 		final Function expected = generateExpectedTestFunctionFor(scalarMultFunc, list(e().numericLiteral(3)), e().numericLiteral(6), H5);
 		
 		assertTrue("Simple scalar multiplication test creation failed for B5 input and H5 output", 
-					functionsEqual.f(testFunc, expected));
+					functionsEqual.test(testFunc, expected));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -94,7 +93,7 @@ public class ExcelTestGeneratorTest
 			}
 		});
 		
-		assertTrue(listsEqual(testFunctions, expectedFunctions, functionsEqual));
+		assertTrue(listsEql(testFunctions, expectedFunctions, functionsEqual));
 	}
 	
 	private Function generateExpectedTestFunctionFor(final Function functionTested,final List<LiteralExpr> inputs, final LiteralExpr expectedResult, final String expectedResultCell)
