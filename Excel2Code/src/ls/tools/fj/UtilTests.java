@@ -1,14 +1,13 @@
 package ls.tools.fj;
 
-import static ls.tools.fj.Util.genericEqualAndCast;
-import static ls.tools.fj.Util.listsEqual;
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
-import fj.F2;
 import fj.P2;
 import fj.data.List;
+import org.junit.Test;
+
+import static ls.tools.fj.Util.genericEqualAndCast;
+import static ls.tools.fj.Util.listsEql;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class UtilTests
 {
@@ -16,26 +15,14 @@ public class UtilTests
 	@Test
 	public void twoNilListsShouldBeEqual() throws Exception
 	{
-		assertTrue(listsEqual(List.nil(), List.nil(), new F2<Object,Object,Boolean>() {
-
-			@Override
-			public Boolean f(Object a, Object b)
-			{
-				return a == b;
-			}}));
+		assertTrue(listsEql(List.nil(), List.nil(), (a,b) ->  a == b ));
 		
 	}
 	
 	@Test
 	public void oneElementListsShouldBeEqual() throws Exception
 	{
-		assertTrue(listsEqual(List.list(1), List.list(1), new F2<Integer,Integer,Boolean>() {
-
-			@Override
-			public Boolean f(Integer a, Integer b)
-			{
-				return a.intValue() == b.intValue();
-			}}));
+		assertTrue(listsEql(List.list(1), List.list(1), (a,b) -> a.intValue() == b.intValue()));
 	}
 	
 	@Test
