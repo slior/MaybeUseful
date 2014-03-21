@@ -1,38 +1,23 @@
 package ls.tools.excel.api;
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.String.format;
-import static org.apache.commons.cli.OptionBuilder.hasArg;
-import static org.apache.commons.cli.OptionBuilder.withArgName;
-import static org.apache.commons.cli.OptionBuilder.withDescription;
-
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
+import fj.data.List;
+import fj.data.Option;
 import ls.tools.excel.FormulaConverter;
 import ls.tools.excel.FunctionFormatter;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.serialize.js.JSFormatter;
-
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import fj.F2;
-import fj.data.List;
-import fj.data.Option;
+import java.io.*;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.String.format;
+import static org.apache.commons.cli.OptionBuilder.*;
 
 public final class CommandLineMain
 {
@@ -103,12 +88,9 @@ public final class CommandLineMain
 
 	private String command(final CommandLine cl)
 	{
-		final List<org.apache.commons.cli.Option> options = List.list(cl.getOptions());
-		return options.foldLeft(new F2<String,org.apache.commons.cli.Option,String>() {
-			@Override public String f(String accum, org.apache.commons.cli.Option opt) {
-				return accum + format("-%1$s %2$s ", opt.getOpt(), opt.getValue());
-			}
-		}, PROGRAM_NAME + " ");
+        return Stream.of(cl.getOptions())
+                .map(opt -> format("-%1$s %2$s ", opt.getOpt(), opt.getValue()))
+                .reduce(PROGRAM_NAME + " ",(accum,opt)-> accum + opt);
 	}
 
 
@@ -130,7 +112,7 @@ public final class CommandLineMain
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	private void readConvertAndOutput(final CommandLine cl) throws InvalidFormatException, FileNotFoundException, IOException
+	private void readConvertAndOutput(final CommandLine cl) throws InvalidFormatException, IOException
 	{
 		say("Reading workbook...");
 		final XSSFWorkbook wb = workbookFor(cl.getOptionValue(SOURCE));
@@ -209,7 +191,7 @@ public final class CommandLineMain
 		return names;
 	}
 
-	private XSSFWorkbook workbookFor(final String filename) throws InvalidFormatException, FileNotFoundException, IOException
+	private XSSFWorkbook workbookFor(final String filename) throws InvalidFormatException, IOException
 	{
 		return (XSSFWorkbook) WorkbookFactory.create(new FileInputStream(filename));
 	}
