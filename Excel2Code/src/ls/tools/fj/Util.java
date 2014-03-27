@@ -1,9 +1,9 @@
 package ls.tools.fj;
 
-import fj.P2;
 import fj.data.List;
 
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -27,13 +27,11 @@ public final class Util
         final boolean restIsEql = listsEql(list1.tail(),list2.tail(),elementsEqlPredicate);
         return restIsEql && elementsEqlPredicate.test(list1.head(),list2.head());
     }
-	
-	public static <A,B> P2<A,B> pair(final A a, final B b) {
-		return new P2<A,B>() {
-			@Override public A _1() { return a; }
-			@Override public B _2() { return b; }
-		};
-	}
+
+    public static <T> Stream<T> stream(final List<T> list)
+    {
+        return list.toCollection().stream(); //TODO: this is probably not very efficient. need to check this
+    }
 
 	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
 	

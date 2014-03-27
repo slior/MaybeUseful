@@ -4,6 +4,8 @@
       <root url="jar://D:/Copy/Copy/Programming/libs/functionaljava/functionaljava.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://D:/Copy/Copy/Programming/libs/functionaljava/src/main" />
+    </SOURCES>
   </library>
 </component>
