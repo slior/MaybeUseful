@@ -1,8 +1,11 @@
 package ls.tools.fj;
 
+import fj.F2;
 import fj.data.List;
 
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -34,5 +37,25 @@ public final class Util
     }
 
 	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }
-	
+
+    public static <I,R> fj.F<I,R> fj(final Function<I,R> f)
+    {
+        return new fj.F<I,R>() {
+            @Override public R f(I i) {
+                return f.apply(i);
+            }
+        };
+    }
+
+    public static <A,B,R> F2<A,B,R> fj(final BiFunction<A,B,R> f)
+    {
+        return new F2<A,B,R>() {
+            @Override public R f(A a, B b) {
+                return f.apply(a,b);
+            }
+        };
+    }
+
+/* public static <I> F<I,Boos */
+
 }

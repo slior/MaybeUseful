@@ -1,18 +1,18 @@
 package ls.tools.excel;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static fj.data.List.list;
-import static ls.tools.excel.CellType.BOOLEAN;
-import static ls.tools.excel.CellType.FORMULA;
-import static ls.tools.excel.CellType.NUMERIC;
-import static ls.tools.excel.model.ExprBuilder.e;
-import static ls.tools.excel.model.Functions.createFunction;
-import static ls.tools.excel.model.Functions.param;
+import fj.F;
+import fj.data.List;
 import ls.tools.excel.model.Expr;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
-import fj.F;
-import fj.data.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static fj.data.List.list;
+import static ls.tools.excel.CellType.*;
+import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
+import static ls.tools.fj.Util.fj;
 
 public enum BuiltInFunction implements Function
 {
@@ -54,13 +54,9 @@ public enum BuiltInFunction implements Function
 	 * @param functionName The name to test with
 	 * @return The predicate (function) object.
 	 */
-	private static final F<BuiltInFunction, Boolean> functionWithName(final String functionName)
+	private static F<BuiltInFunction, Boolean> functionWithName(final String functionName)
 	{
 		checkArgument(functionName != null && !"".equals(functionName),"Function name can't be null or empty");
-		return new F<BuiltInFunction, Boolean>() {
-					@Override public Boolean f(BuiltInFunction a) {
-						return a.name().equalsIgnoreCase(functionName);
-					}
-				};
+        return fj(func -> func.name().equalsIgnoreCase(functionName));
 	}
 }

@@ -1,40 +1,13 @@
 package ls.tools.excel;
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static fj.Equal.equal;
-import static fj.data.List.list;
-import static fj.data.List.nil;
-import static ls.tools.excel.CellType.FORMULA;
-import static ls.tools.excel.CellType.fromSSCellType;
-import static ls.tools.excel.model.ExprBuilder.e;
-import static ls.tools.excel.model.Functions.createFunction;
-import static ls.tools.excel.model.Functions.param;
-import static ls.tools.fj.Util.notEmpty;
-import static org.apache.poi.ss.formula.FormulaParser.parse;
-
-import java.util.Stack;
-
-import ls.tools.excel.model.BinaryOp;
-import ls.tools.excel.model.Binding;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Function;
-import ls.tools.excel.model.FunctionExpr;
-import ls.tools.excel.model.Param;
-import ls.tools.excel.model.VarExpr;
-
+import fj.F;
+import fj.data.List;
+import fj.data.Option;
+import ls.tools.excel.model.*;
 import org.apache.poi.ss.formula.FormulaParsingWorkbook;
 import org.apache.poi.ss.formula.FormulaType;
-import org.apache.poi.ss.formula.ptg.AbstractFunctionPtg;
-import org.apache.poi.ss.formula.ptg.BoolPtg;
-import org.apache.poi.ss.formula.ptg.EqualPtg;
-import org.apache.poi.ss.formula.ptg.IntPtg;
-import org.apache.poi.ss.formula.ptg.MultiplyPtg;
-import org.apache.poi.ss.formula.ptg.Ptg;
-import org.apache.poi.ss.formula.ptg.RefPtg;
-import org.apache.poi.ss.formula.ptg.ScalarConstantPtg;
+import org.apache.poi.ss.formula.ptg.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -43,10 +16,20 @@ import org.apache.poi.xssf.usermodel.XSSFEvaluationWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import fj.F;
-import fj.F2;
-import fj.data.List;
-import fj.data.Option;
+import java.util.Stack;
+
+import static com.google.common.base.Preconditions.*;
+import static fj.Equal.equal;
+import static fj.data.List.list;
+import static fj.data.List.nil;
+import static ls.tools.excel.CellType.FORMULA;
+import static ls.tools.excel.CellType.fromSSCellType;
+import static ls.tools.excel.model.ExprBuilder.e;
+import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.excel.model.Functions.param;
+import static ls.tools.fj.Util.fj;
+import static ls.tools.fj.Util.notEmpty;
+import static org.apache.poi.ss.formula.FormulaParser.parse;
 
 public final class FormulaConverter
 {
@@ -226,8 +209,7 @@ public final class FormulaConverter
 	
 	private boolean isCellReference(Ptg token)
 	{
-		if (!(token instanceof RefPtg)) return false;
-		return !typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
+		return token instanceof RefPtg && !typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
 	}
 
 	private BinaryOp op(final Ptg token) //TODO: should unify this definition with that of #isBinaryOp
@@ -239,8 +221,7 @@ public final class FormulaConverter
 
 	private boolean isFuncCall(Ptg token)
 	{
-		if (!(token instanceof RefPtg)) return false;
-		return typeOfCellReferencedBy((RefPtg)token).equals(FORMULA); 
+		return token instanceof RefPtg && typeOfCellReferencedBy((RefPtg)token).equals(FORMULA);
 	}
 
 	private boolean isBinaryOp(final Ptg token) 
@@ -274,15 +255,12 @@ public final class FormulaConverter
 	{
 		return unresolvedSymbols
 				//Remove duplicates
-				.nub(equal(new F<RefPtg, F<RefPtg,Boolean>>() {
-					@Override public F<RefPtg, Boolean> f(final RefPtg r1) {
-						return new F<RefPtg, Boolean>() { @Override public Boolean f(final RefPtg r2) { return r1.toFormulaString().equals(r2.toFormulaString()); } };
-					}
-				})) 
+                .nub(equal(fj((RefPtg r1) -> fj(((RefPtg r2) -> r1.toFormulaString().equals(r2.toFormulaString()))))))
 				//Filter out all the formula references
-				.filter(new F<RefPtg,Boolean>() { @Override public Boolean f(RefPtg a) { return typeOfCellReferencedBy(a) != CellType.FORMULA; } })
+                .filter(fj(ref -> typeOfCellReferencedBy(ref) != FORMULA))
 				//Convert references to param declarations
-				.map(new F<RefPtg,Param>() { @Override public Param f(final RefPtg token) { return param(token.toFormulaString(),typeOfCellReferencedBy(token)); }});
+                .map(fj(ref->param(ref.toFormulaString(),typeOfCellReferencedBy(ref)))
+                );
 	}
 
 	/**
@@ -307,9 +285,8 @@ public final class FormulaConverter
 		//generate the invocation code
 		//Assumption: the last function is the one we need to work with.
 		final Function funcToInvoke = f.last();
-		final List<VarExpr> args = funcToInvoke.parameters().map( //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
-				new F<Param,VarExpr>() { @Override public VarExpr f(final Param a) { return e().var(a.name()).ofType(a.type()); }});
-		
+        //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
+        final List<VarExpr> args = funcToInvoke.parameters().map(fj(p -> var(p.name(),p.type())));
 		final VarExpr newVar = var(token.toFormulaString(), f.last().returnType());
 		return e().bindingOf(newVar).to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
 	}
@@ -346,10 +323,8 @@ public final class FormulaConverter
 	 */
 	private Option<Name> nameForCell(final Cell c)
 	{
-		final Workbook wb = sheet.getWorkbook();
-		final List<Name> names = namedRangesIn(wb);
-		return names.find(new F<Name,Boolean>() {
-			@Override public Boolean f(final Name n) { return c.equals(cell(n.getRefersToFormula())); }});
+        return namedRangesIn(sheet.getWorkbook())
+                .find(fj(n -> c.equals(cell(n.getRefersToFormula()))));
 	}
 	
 
@@ -379,16 +354,13 @@ public final class FormulaConverter
 		final List<Function> initial = nil();
 		return list(names)
 					//convert each name to a list of functions. Note: clears the unresolved symbols after each mapping.
-					.map(new F<String,List<Function>>() { @Override public List<Function> f(final String name) { 
-						final List<Function> ret = formulasFromNamedCell(workbook, name); 
-						clearUnresolvedSymbols(); 
-						return ret;
-						}})
+                    .map(fj(name -> {
+                        final List<Function> ret = formulasFromNamedCell(workbook, name);
+                        clearUnresolvedSymbols();
+                        return ret;
+                    }))
 					//concatenate all the results together
-					.foldLeft(new F2<List<Function>,List<Function>,List<Function>>() {@Override public List<Function> f(List<Function> a,List<Function> b) {
-						return a.append(b); 
-						}},initial)
-					//and remove duplicates
+                    .foldLeft(fj((a,b) -> a.append(b)),initial)
 					.nub();
 	}
 

@@ -1,15 +1,11 @@
 package ls.tools.excel;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import ls.tools.excel.model.BinOpExpr;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Function;
-import ls.tools.excel.model.LiteralExpr;
-import ls.tools.excel.model.Param;
-import ls.tools.excel.model.VarExpr;
 import fj.F;
-import fj.F2;
 import fj.data.List;
+import ls.tools.excel.model.*;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static ls.tools.fj.Util.fj;
 
 final class DefaultFormatter implements FunctionFormatter
 {
@@ -31,23 +27,21 @@ final class DefaultFormatter implements FunctionFormatter
 	{
 		if (expr instanceof LiteralExpr)
 		{
-			return new F<Expr, String>() { @Override public String f(Expr a) { return ((LiteralExpr)a).value(); } };
+            return fj(e -> ((LiteralExpr)e).value()); //TODO: will it be better if it's: () -> ((LiteralExpr)expr).value() ?
 		}
 		else if (expr instanceof VarExpr)
 		{
-			return new F<Expr,String>() { @Override public String f(Expr a) { return ((VarExpr)a).name(); }};
+            return fj(e -> ((VarExpr)e).name());
 		}
 		else if (expr instanceof BinOpExpr)
 		{
-			return new F<Expr,String>() {
-				@Override public String f(Expr e)
-				{
-					final BinOpExpr expr = (BinOpExpr)e;
-					return String.format("%1$s %2$s %3$s",
-										formatExpr(expr.subExpressions().head()),
-										expr.op(),
-										formatExpr(expr.subExpressions().tail().head()));
-				}};
+            return fj(e-> {
+                final BinOpExpr binOpExpr = (BinOpExpr)e;
+                return String.format("%1$s %2$s %3$s",
+                        formatExpr(binOpExpr.subExpressions().head()),
+                        binOpExpr.op(),
+                        formatExpr(binOpExpr.subExpressions().tail().head()));
+            });
 		}
 		else throw new IllegalArgumentException("Can't format expression of class: " + expr.getClass().getCanonicalName());
 		
@@ -55,14 +49,7 @@ final class DefaultFormatter implements FunctionFormatter
 
 	private String formatParams(final List<Param> list)
 	{
-		final String ret = list.foldRight(new F2<Param,String,String>()
-		{
-			@Override
-			public String f(Param param, String accum)
-			{
-				return param.name() + " : " + param.type() + "," + accum; 
-			}
-		}, "");
+        final String ret = list.foldRight(fj((param, accum) -> param.name() + " : " + param.type() + "," + accum),"");
 		return ret.substring(0,ret.length()-1);
 	}
 
@@ -70,10 +57,7 @@ final class DefaultFormatter implements FunctionFormatter
 	public <Func extends Function> String format(final List<Func> functions, final String delimiter)
 	{
 		checkArgument(delimiter != null,"Delimiter can't be null");
-		return functions.foldLeft(new F2<String,Func,String>()
-		{
-			@Override public String f(final String accum, final Func func) {  return accum + delimiter + format(func); }
-		}, delimiter);
+        return functions.foldLeft(fj((accum,func)-> accum + delimiter + format(func)),delimiter);
 	}
 
 }
