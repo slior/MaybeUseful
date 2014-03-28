@@ -6,7 +6,6 @@ import fj.data.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -29,11 +28,6 @@ public final class Util
 
         final boolean restIsEql = listsEql(list1.tail(),list2.tail(),elementsEqlPredicate);
         return restIsEql && elementsEqlPredicate.test(list1.head(),list2.head());
-    }
-
-    public static <T> Stream<T> stream(final List<T> list)
-    {
-        return list.toCollection().stream(); //TODO: this is probably not very efficient. need to check this
     }
 
 	public static boolean notEmpty(final String s ) { return s != null && !"".equals(s); }

@@ -6,7 +6,7 @@ import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static ls.tools.fj.Util.stream;
+import static ls.tools.fj.Util.fj;
 
 public final class JSFormatter implements FunctionFormatter
 {
@@ -33,7 +33,7 @@ public final class JSFormatter implements FunctionFormatter
 
 	private String formatParams(final List<Param> parameters)
 	{
-        final String res = stream(parameters).map(Param::name).reduce("",(accum,p)-> accum + p + ",");
+        final String res = parameters.map(fj(Param::name)).foldLeft(fj((accum,p) -> accum + p + ","),"");
         return res.substring(0,res.length()-1);
 	}
 
@@ -43,9 +43,7 @@ public final class JSFormatter implements FunctionFormatter
 		checkArgument(functions != null,"Functions can't be null");
 		checkArgument(delimiter != null,"Delimiter can't be null");
 
-        final String res = stream(functions)
-                            .map(f -> format(f))
-                            .reduce("", (accum, output) -> accum + output + delimiter);
+        final String res = functions.map(fj(f -> format(f))).foldLeft(fj((output,accum)->accum + output + delimiter),"");
         return res.substring(0,res.length());
 	}
 
