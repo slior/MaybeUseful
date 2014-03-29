@@ -1,18 +1,13 @@
 package ls.tools.excel.serialize.js;
 
+import ls.tools.excel.BuiltInFunction;
+import ls.tools.excel.model.*;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 import static ls.tools.excel.BuiltInFunction.isBuiltinFunction;
 import static ls.tools.excel.CellType.STRING;
-import ls.tools.excel.BuiltInFunction;
-import ls.tools.excel.model.BinOpExpr;
-import ls.tools.excel.model.Binding;
-import ls.tools.excel.model.CompositeExpr;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.FunctionExpr;
-import ls.tools.excel.model.LiteralExpr;
-import ls.tools.excel.model.VarExpr;
-import fj.F2;
+import static ls.tools.fj.Util.fj;
 
 final class JSExpressionSerializer 
 {
@@ -33,7 +28,6 @@ final class JSExpressionSerializer
 		else if (e instanceof VarExpr) return serialize((VarExpr)e);
 		else if (e instanceof CompositeExpr) return serialize((CompositeExpr)e);
 		else throw new IllegalArgumentException("Can't identify type of expression: " + getClass().getCanonicalName());
-		
 	}
 	
 	private String serialize(Binding e) 
@@ -73,11 +67,7 @@ final class JSExpressionSerializer
 	
 	private String formatArgumentsOf(FunctionExpr fe)
 	{
-		final String args = fe.args().foldLeft(new F2<String,Expr,String>() {
-			@Override public String f(String accum, Expr e) {
-				return accum + serialize(e) + ",";
-			}
-		}, "");
+        final String args = fe.args().foldLeft(fj((accum, e) -> accum + serialize(e) + ","), "");
 		return args.substring(0, args.length()-1);
 	}
 
@@ -97,13 +87,9 @@ final class JSExpressionSerializer
 	private String serialize(CompositeExpr ce) 
 	{
 		checkArgument(ce != null,"Composite expression can't be null");
-		return format(BLOCK_PATTERN,
-				ce.subExpressions().foldLeft(new F2<String,Expr,String>() {
-					@Override public String f(String accum, Expr e) {
-						return accum + NL + serialize(e) + ";";
-					}
-				}, ""),
-				serialize(evaluationOf(ce.subExpressions().last())) + ";");
+        return format(BLOCK_PATTERN,
+                        ce.subExpressions().foldLeft(fj((accum, e) -> accum + NL + serialize(e) + ";"),""),
+                        serialize(evaluationOf(ce.subExpressions().last())) + ";");
 	}
 
 	private Expr evaluationOf(Expr e) //TODO: code smell: this should be encapsulated in the expression definition

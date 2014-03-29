@@ -1,12 +1,12 @@
 package ls.tools.excel;
 
-import fj.F;
 import fj.P2;
 import fj.data.List;
 import ls.tools.excel.model.Binding;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.model.LiteralExpr;
 import ls.tools.excel.model.Param;
+import ls.tools.fj.Util;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -87,12 +87,12 @@ public class ExcelTestGeneratorTest
 														e().numericLiteral(6));
 		
 		final List<P2<P2<List<LiteralExpr>, LiteralExpr>, String>> testCases = inputValues.zip(expectedOutputs).zip(expectedOutputCells);
-		final List<Function> expectedFunctions = testCases.map(new F<P2<P2<List<LiteralExpr>,LiteralExpr>,String>, Function>() {
-			@Override public Function f(P2<P2<List<LiteralExpr>, LiteralExpr>, String> testCase) {
-				return generateExpectedTestFunctionFor(scalarMultFunc, testCase._1()._1(), testCase._1()._2(), testCase._2());
-			}
-		});
-		
+        final List<Function> expectedFunctions = testCases
+                                                    .map(Util.fj(testCase -> generateExpectedTestFunctionFor(scalarMultFunc,
+                                                                                testCase._1()._1(), //inputs
+                                                                                testCase._1()._2(), //expected result
+                                                                                testCase._2())));   //expected result cell
+
 		assertTrue(listsEql(testFunctions, expectedFunctions, functionsEqual));
 	}
 	

@@ -1,7 +1,6 @@
 package ls.tools.excel;
 
 
-import fj.F;
 import fj.data.List;
 import fj.data.Option;
 import ls.tools.excel.model.*;
@@ -35,7 +34,7 @@ public final class FormulaConverter
 {
 
 	private static final int RESOLVE_NAMES_IN_CONTAINING_SHEET = -1;
-	private final Stack<Expr> resultStack = new Stack<>();
+	private final Stack<Expr> resultStack = new Stack<Expr>();
 	private List<RefPtg> unresolvedSymbols = nil();
 	private XSSFSheet sheet;
 	private FormulaParsingWorkbook fpwb;
@@ -149,17 +148,11 @@ public final class FormulaConverter
 			else if (isBuiltInFunction(token))
 			{
 				final Function builtIn = builtInFunction(((AbstractFunctionPtg)token).getName());
-				final List<Expr> args =  builtIn.parameters().map(new F<Param,Expr>() {
-					@Override
-					public Expr f(final Param a)
-					{
-						final Expr e = resultStack.pop(); //note: this changes state of algorithm, the stack is popped.
-						return evaluationOf(e);
-					}})
-					.reverse();
-				
+                final List<Expr> args = builtIn.parameters()
+                                            .map(fj(p -> evaluationOf(resultStack.pop())))
+                                            .reverse();
 				final FunctionExpr fe = e().invocationOf(builtIn).withArgs(args.toArray().array(Expr[].class));
-				final Binding b = createBindingTo(fe); 
+				final Binding b = createBindingTo(fe);
 				resultStack.push(addToBody(b));
 			}
 			else if (isCellReference(token))
@@ -360,7 +353,7 @@ public final class FormulaConverter
                         return ret;
                     }))
 					//concatenate all the results together
-                    .foldLeft(fj((a,b) -> a.append(b)),initial)
+                    .foldLeft(fj((a, b) -> a.append(b)), initial)
 					.nub();
 	}
 

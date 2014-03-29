@@ -1,23 +1,17 @@
 package ls.tools.excel;
 
+import fj.F2;
+import fj.data.List;
+import ls.tools.excel.model.*;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static ls.tools.excel.model.BinaryOp.EQL;
 import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
+import static ls.tools.fj.Util.fj;
 import static ls.tools.fj.Util.notEmpty;
-import ls.tools.excel.model.BinOpExpr;
-import ls.tools.excel.model.Binding;
-import ls.tools.excel.model.Expr;
-import ls.tools.excel.model.Function;
-import ls.tools.excel.model.Param;
-
-import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import fj.F;
-import fj.F2;
-import fj.P2;
-import fj.data.List;
 
 public final class ExcelTestGenerator
 {
@@ -38,12 +32,9 @@ public final class ExcelTestGenerator
 		
 		//Assumption: the input cells match the parameters in location in the list.
 		// i.e. the i-th parameter corresponds to the i-th input cell given.
-		final List<Expr> argValues = funcToTest.parameters().zipWith(inputCells, new F2<Param, String, Expr>() {
-			@Override public Expr f(Param p, String inputCell) {
-				return e().literal(cellValue(sheetName,inputCell)).ofType(p.type());
-			}
-		});
-		
+        final F2<Param,String,Expr> zipFunc = fj(((Param p, String cell) -> e().literal(cellValue(sheetName, cell)).ofType(p.type())));
+        final List<Expr> argValues = funcToTest.parameters().zipWith(inputCells,zipFunc);
+
 		final Binding result = e().bindingOf(e().var("result").ofType(funcToTest.returnType()))
 							 	  .to(e().invocationOf(funcToTest).withArgs(argValues));
 		final BinOpExpr comparison = e().binOp(result.var(), EQL, e().literal(expected).ofType(result.var().type()));
@@ -54,12 +45,8 @@ public final class ExcelTestGenerator
 	public List<Function> generateTestsFor(final Function funcToTest, final String sheetName, final List<List<String>> testCasesInputs, final List<String> expectedOutputs)
 	{
 		checkArgument(testCasesInputs.length() == expectedOutputs.length(),"Inputs count must match expected output count");
-		return testCasesInputs.zip(expectedOutputs)
-				.map(new F<P2<List<String>,String>, Function>() {
-					@Override public Function f(P2<List<String>, String> testCase) {
-						return generateTestFuncFor(funcToTest, sheetName, testCase._1(), testCase._2());
-					}
-				});
+        return testCasesInputs.zip(expectedOutputs)
+                .map(fj(testCase -> generateTestFuncFor(funcToTest, sheetName, testCase._1(), testCase._2())));
 	}
 	
 	private String cellValue(final String sheetName, final String cellRefFormula)
