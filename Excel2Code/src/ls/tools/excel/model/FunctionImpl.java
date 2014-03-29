@@ -1,7 +1,6 @@
 // $codepro.audit.disable com.instantiations.assist.eclipse.analysis.audit.rule.effectivejava.obeyEqualsContract.obeyGeneralContractOfEquals
 package ls.tools.excel.model;
 
-import fj.F;
 import fj.data.List;
 import ls.tools.excel.CellType;
 
@@ -47,8 +46,6 @@ final class FunctionImpl implements Function
 	
 	static Param param(final String name, final CellType type) { return new ParamImpl(name,type); }
 	
-	private static final F<Param,String> PARAM_TO_STRING = new F<Param,String>() {@Override public String f(Param p) { return p.toString(); }};
-
 	private final String name;
 	private final List<Param> params;
 	private final Expr body;
@@ -96,7 +93,7 @@ final class FunctionImpl implements Function
 
 	@Override public String toString()
 	{
-		return name() + ": " + listShow(showS(PARAM_TO_STRING)).showS(parameters()) + " => " + returnType().toString();
+        return name() + ": " + listShow(showS(fj(Param::toString))).showS(parameters()) + " => " + returnType().toString();
 	}
 
 }

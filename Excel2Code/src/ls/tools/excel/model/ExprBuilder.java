@@ -1,6 +1,5 @@
 package ls.tools.excel.model;
 
-import fj.F2;
 import fj.data.List;
 import ls.tools.excel.CellType;
 
@@ -106,14 +105,6 @@ public final class ExprBuilder
 	public LiteralBuilder literal(final String val)
 	{
         return (type) -> new LiteralExprImpl(val,type);
-//		return new LiteralBuilder() {
-//
-//			@Override public LiteralExpr ofType(final CellType type)
-//			{
-//				checkArgument(type != null,"type can't be null");
-//				return new LiteralExprImpl(val, type);
-//			}
-//		};
 	}
 	
 	/**
@@ -131,13 +122,6 @@ public final class ExprBuilder
 	 */
 	public LiteralExpr booleanLiteral(final boolean b) { return new LiteralExprImpl(b); }
 	//----
-	
-//	public interface BinOpBuilder
-//	{
-//		BinOpBuilder ofType(CellType type);
-//		BinOpExpr andOperands(Expr e1,Expr e2);
-//	}
-
 	
 	public BinOpExpr binOp(final Expr e1, final BinaryOp op, final Expr e2)
 	{
@@ -164,59 +148,6 @@ public final class ExprBuilder
 			
 		};
 	}
-	
-//	/**
-//	 * Enables <code>e().binOp(op).ofType(type).andOperands(expr1,expr2)</code>
-//	 * @deprecated Use {@link #binOp(Expr, BinaryOp, Expr)} instead - safer
-//	 */
-//	@Deprecated
-//	public BinOpBuilder binOp(final String _op)
-//	{
-//		checkArgument(Util.notEmpty(_op),"Operand can't be legal"); //should probably also check validity of the operator
-//		return new BinOpBuilder()
-//		{
-//			final String op = _op;
-//			CellType type;
-//
-//			@Override
-//			public BinOpBuilder ofType(final CellType _type)
-//			{
-//				checkArgument(_type != null, "type of operator can't be null");
-//				type = _type;
-//				return this;
-//			}
-//
-//			@Override
-//			public BinOpExpr andOperands(final Expr e1, final Expr e2)
-//			{
-//				checkArgument(e1 != null,"Expression #1 can't be null");
-//				checkArgument(e2 != null,"Expression #2 can't be null");
-//				return new BinOpExpr()
-//				{
-//
-//					@Override public CellType type() { return type; }
-//					@Override public List<Expr> subExpressions() { return list(e1,e2); }
-//					@Override public String op() { return op; }
-//					@Override public boolean equals(final Object that)
-//					{
-//						if (this == that) return true;
-//						if (that == null) return false;
-//						if (!(that instanceof BinOpExpr)) return false;
-//						final BinOpExpr boe = (BinOpExpr)that;
-//						return 	equal(type(),boe.type()) &&
-//								equal(op(),boe.op()) &&
-//								listsEql(this.subExpressions(),boe.subExpressions(),exprEqlPredicate);
-//					}
-//
-//					@Override public int hashCode() { return hash(type(),op()) + deepHashCode(subExpressions().toArray().array()); }
-//					@Override public String toString() { return "(" + e1.toString() + ") " + op() + " (" + e2.toString() + ")"; }
-//
-//
-//				};
-//			}
-//		};
-//	}
-
 	//----
 	
 	public interface FunctionInvocationBuilder
@@ -255,8 +186,7 @@ public final class ExprBuilder
 				@Override public int hashCode() { return hash(functionName(),type()) + deepHashCode(args().toArray().array()); }
 				@Override public String toString()
 				{
-					final String argsString = args().foldRight(new F2<Expr,String,String>() {
-						@Override public String f(Expr e, String accum)  { return e.toString() + "," + accum; }}, "");
+                    final String argsString = args().foldRight(fj((exp, accum) -> exp.toString() + "," + accum),"");
 					return functionName() + "(" + argsString.substring(0, argsString.length()-1) + ")";
 				}
 			}
@@ -321,8 +251,7 @@ public final class ExprBuilder
 		@Override public int hashCode() { return deepHashCode(subExpressions().toArray().array()); }
 		@Override public String toString()
 		{
-			return subExpressions().foldRight(new F2<Expr,String,String>() {
-				@Override public String f(Expr a, String accum) { return a.toString() + ";\n" + accum; }}, "");
+            return subExpressions().foldRight(fj((exp,accum)->exp.toString() + ";\n" + accum),"");
 		}
 	}
 	
