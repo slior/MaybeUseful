@@ -2,10 +2,7 @@ package ls.tools.excel;
 
 import fj.P2;
 import fj.data.List;
-import ls.tools.excel.model.Binding;
-import ls.tools.excel.model.Function;
-import ls.tools.excel.model.LiteralExpr;
-import ls.tools.excel.model.Param;
+import ls.tools.excel.model.*;
 import ls.tools.fj.Util;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
@@ -21,13 +18,12 @@ import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.BOOLEAN;
 import static ls.tools.excel.model.BinaryOp.EQL;
-import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.fj.Util.listsEql;
 import static ls.tools.fj.Util.nullCheckingEqualPredicate;
 import static org.junit.Assert.assertTrue;
 
-public class ExcelTestGeneratorTest
+public final class ExcelTestGeneratorTest implements ExpressionBuilder
 {
 
 	private static final String B5 = "B5";
@@ -56,7 +52,7 @@ public class ExcelTestGeneratorTest
 		final Function scalarMultFunc = new FormulaConverterTest().simpleScalarMultExpectedResult().head();
 		final Function testFunc = testGenerator.generateTestFuncFor(scalarMultFunc,SHEET1,list(B5),H5);
 		
-		final Function expected = generateExpectedTestFunctionFor(scalarMultFunc, list(e().numericLiteral(3)), e().numericLiteral(6), H5);
+		final Function expected = generateExpectedTestFunctionFor(scalarMultFunc, list(numericLiteral(3)), numericLiteral(6), H5);
 		
 		assertTrue("Simple scalar multiplication test creation failed for B5 input and H5 output", 
 					functionsEqual.test(testFunc, expected));
@@ -80,28 +76,28 @@ public class ExcelTestGeneratorTest
 		
 		@SuppressWarnings("unchecked")
 		final List<List<LiteralExpr>> inputValues = list(
-														list(e().numericLiteral(1)),
-														list(e().numericLiteral(3)));
+														list(numericLiteral(1)),
+														list(numericLiteral(3)));
 		final List<LiteralExpr> expectedOutputs = list(
-														e().numericLiteral(2),
-														e().numericLiteral(6));
+														numericLiteral(2),
+														numericLiteral(6));
 		
 		final List<P2<P2<List<LiteralExpr>, LiteralExpr>, String>> testCases = inputValues.zip(expectedOutputs).zip(expectedOutputCells);
         final List<Function> expectedFunctions = testCases
                                                     .map(Util.fj(testCase -> generateExpectedTestFunctionFor(scalarMultFunc,
-                                                                                testCase._1()._1(), //inputs
-                                                                                testCase._1()._2(), //expected result
-                                                                                testCase._2())));   //expected result cell
+                                                            testCase._1()._1(), //inputs
+                                                            testCase._1()._2(), //expected result
+                                                            testCase._2())));   //expected result cell
 
 		assertTrue(listsEql(testFunctions, expectedFunctions, functionsEqual));
 	}
 	
 	private Function generateExpectedTestFunctionFor(final Function functionTested,final List<LiteralExpr> inputs, final LiteralExpr expectedResult, final String expectedResultCell)
 	{
-		final Binding resultVarDef = e().bindingOf(e().var(EXPECTED_RESULT_VAR_NAME).ofType(functionTested.returnType()))
-			  		.to(e().invocationOf(functionTested).withArgs(inputs));
+		final Binding resultVarDef = bindingOf(var(EXPECTED_RESULT_VAR_NAME).ofType(functionTested.returnType()))
+			  		.to(invocationOf(functionTested).withArgs(inputs));
 		return createFunction("test_" + functionTested.name() + "_" + expectedResultCell, NO_PARAMS , 
-								e().sequence(resultVarDef, e().binOp(resultVarDef.var(), EQL, expectedResult)),
+								sequence(resultVarDef, binOp(resultVarDef.var(), EQL, expectedResult)),
 								BOOLEAN);
 	}
 }

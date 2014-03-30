@@ -23,14 +23,13 @@ import static fj.data.List.list;
 import static fj.data.List.nil;
 import static ls.tools.excel.CellType.FORMULA;
 import static ls.tools.excel.CellType.fromSSCellType;
-import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.excel.model.Functions.param;
 import static ls.tools.fj.Util.fj;
 import static ls.tools.fj.Util.notEmpty;
 import static org.apache.poi.ss.formula.FormulaParser.parse;
 
-public final class FormulaConverter
+public final class FormulaConverter implements ExpressionBuilder
 {
 
 	private static final int RESOLVE_NAMES_IN_CONTAINING_SHEET = -1;
@@ -105,7 +104,7 @@ public final class FormulaConverter
 	 */
 	private List<Function> createFunctionsFor(final String name)
 	{
-		final Expr body = e().sequence(bodySeq);
+		final Expr body = sequence(bodySeq);
 		return generatedFunctions.snoc(createFunction(name,paramList(),body,body.type()));
 	}
 
@@ -137,7 +136,7 @@ public final class FormulaConverter
 				if (resultStack.size() < 2) throw new IllegalStateException("Binary operator must have at least two operands.");
 				final Expr op2 = resultStack.pop();
 				final Expr op1 = resultStack.pop();
-				final Binding b = createBindingTo(e().binOp(evaluationOf(op1), op(token), evaluationOf(op2)));
+				final Binding b = createBindingTo(binOp(evaluationOf(op1), op(token), evaluationOf(op2)));
 				resultStack.push(addToBody(b));
 			}
 			else if (isFuncCall(token))
@@ -151,14 +150,14 @@ public final class FormulaConverter
                 final List<Expr> args = builtIn.parameters()
                                             .map(fj(p -> evaluationOf(resultStack.pop())))
                                             .reverse();
-				final FunctionExpr fe = e().invocationOf(builtIn).withArgs(args.toArray().array(Expr[].class));
+				final FunctionExpr fe = invocationOf(builtIn).withArgs(args.toArray().array(Expr[].class));
 				final Binding b = createBindingTo(fe);
 				resultStack.push(addToBody(b));
 			}
 			else if (isCellReference(token))
 			{
 				unresolvedSymbols = unresolvedSymbols.cons((RefPtg)token);
-				resultStack.push(e().var(token.toFormulaString()).ofType(typeOfCellReferencedBy((RefPtg)token)));
+				resultStack.push(var(token.toFormulaString()).ofType(typeOfCellReferencedBy((RefPtg)token)));
 			}
 		}
 		
@@ -192,12 +191,12 @@ public final class FormulaConverter
 	{
 		checkArgument(token instanceof ScalarConstantPtg,"Illegal token for literal - should be a scalar");
 		final CellType type = CellType.literalTypeFrom((ScalarConstantPtg)token);
-		return createBindingTo(e().literal(token.toFormulaString()).ofType(type));
+		return createBindingTo(literal(token.toFormulaString()).ofType(type));
 	}
 
 	private Binding createBindingTo(final Expr e)
 	{
-		return e().bindingOf(e().var(newLocalVarName()).ofType(e.type())).to(e);
+		return bindingOf(var(newLocalVarName()).ofType(e.type())).to(e);
 	}
 	
 	private boolean isCellReference(Ptg token)
@@ -281,7 +280,7 @@ public final class FormulaConverter
         //map all parameters to an argument to pass to the invocation. We assume they're defined, probably as arguments.
         final List<VarExpr> args = funcToInvoke.parameters().map(fj(p -> var(p.name(),p.type())));
 		final VarExpr newVar = var(token.toFormulaString(), f.last().returnType());
-		return e().bindingOf(newVar).to(e().invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
+		return bindingOf(newVar).to(invocationOf(f.last()).withArgs(args.toArray().array(VarExpr[].class)));
 	}
 
 
@@ -301,7 +300,7 @@ public final class FormulaConverter
 
 	private VarExpr var(final String varName, final CellType varType)
 	{
-		return e().var(varName).ofType(varType);
+		return var(varName).ofType(varType);
 	}
 
 	private void rememberFunctions(final List<Function> f)

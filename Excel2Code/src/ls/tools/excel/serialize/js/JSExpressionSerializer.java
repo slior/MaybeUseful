@@ -55,6 +55,7 @@ final class JSExpressionSerializer
 
 	private String formatBuiltInFunctionCall(final FunctionExpr fe)
 	{
+        checkArgument(fe != null,"Function expression can't be null");
 		final BuiltInFunction f = BuiltInFunction.from(fe.functionName());
 		String funcCall ;
 		switch (f)
@@ -65,26 +66,27 @@ final class JSExpressionSerializer
 		return format(FUNCTION_CALL_PATTERN,funcCall,formatArgumentsOf(fe));
 	}
 	
-	private String formatArgumentsOf(FunctionExpr fe)
+	private String formatArgumentsOf(final FunctionExpr fe)
 	{
+        checkArgument(fe != null,"Function expression can't be null");
         final String args = fe.args().foldLeft(fj((accum, e) -> accum + serialize(e) + ","), "");
 		return args.substring(0, args.length()-1);
 	}
 
-	private String serialize(LiteralExpr e) 
+	private String serialize(final LiteralExpr e)
 	{
 		checkArgument(e != null,"Literal expression can't be null");
 		final String q = e.type() == STRING ? "'" : "";
 		return q + e.value() + q;
 	}
 	
-	private String serialize(VarExpr e) 
+	private String serialize(final VarExpr e)
 	{
 		checkArgument(e != null,"Variable expression can't be null");
 		return e.name();
 	}
 	
-	private String serialize(CompositeExpr ce) 
+	private String serialize(final CompositeExpr ce)
 	{
 		checkArgument(ce != null,"Composite expression can't be null");
         return format(BLOCK_PATTERN,

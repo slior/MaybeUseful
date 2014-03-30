@@ -3,18 +3,18 @@ package ls.tools.excel;
 import fj.F;
 import fj.data.List;
 import ls.tools.excel.model.Expr;
+import ls.tools.excel.model.ExpressionBuilder;
 import ls.tools.excel.model.Function;
 import ls.tools.excel.model.Param;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static fj.data.List.list;
 import static ls.tools.excel.CellType.*;
-import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.excel.model.Functions.param;
 import static ls.tools.fj.Util.fj;
 
-public enum BuiltInFunction implements Function
+public enum BuiltInFunction implements Function, ExpressionBuilder
 {
 	SQRT("SQRT",list(param("X",NUMERIC)),NUMERIC),
 	MOD("MOD",list(param("X",NUMERIC),param("DIVISOR",NUMERIC)),NUMERIC),
@@ -24,7 +24,7 @@ public enum BuiltInFunction implements Function
 
 	private BuiltInFunction(final String _name, final List<Param> _params, final CellType ret)
 	{
-		this.func = createFunction(_name, _params, e().sequence(), ret);
+		this.func = createFunction(_name, _params, sequence(), ret);
 	}
 
 	@Override public List<Param> parameters() { return func.parameters(); }

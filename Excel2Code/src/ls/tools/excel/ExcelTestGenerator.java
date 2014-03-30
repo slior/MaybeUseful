@@ -8,12 +8,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static ls.tools.excel.model.BinaryOp.EQL;
-import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.fj.Util.fj;
 import static ls.tools.fj.Util.notEmpty;
 
-public final class ExcelTestGenerator
+public final class ExcelTestGenerator implements ExpressionBuilder
 {
 
 	private final XSSFWorkbook wb;
@@ -32,14 +31,14 @@ public final class ExcelTestGenerator
 		
 		//Assumption: the input cells match the parameters in location in the list.
 		// i.e. the i-th parameter corresponds to the i-th input cell given.
-        final F2<Param,String,Expr> zipFunc = fj(((Param p, String cell) -> e().literal(cellValue(sheetName, cell)).ofType(p.type())));
+        final F2<Param,String,Expr> zipFunc = fj(((Param p, String cell) -> literal(cellValue(sheetName, cell)).ofType(p.type())));
         final List<Expr> argValues = funcToTest.parameters().zipWith(inputCells,zipFunc);
 
-		final Binding result = e().bindingOf(e().var("result").ofType(funcToTest.returnType()))
-							 	  .to(e().invocationOf(funcToTest).withArgs(argValues));
-		final BinOpExpr comparison = e().binOp(result.var(), EQL, e().literal(expected).ofType(result.var().type()));
+		final Binding result = bindingOf(var("result").ofType(funcToTest.returnType()))
+							 	  .to(invocationOf(funcToTest).withArgs(argValues));
+		final BinOpExpr comparison = binOp(result.var(), EQL, literal(expected).ofType(result.var().type()));
 		final List<Param> noParams = List.nil();
-		return createFunction("test_" + funcToTest.name() + "_" + expectedOutputCell, noParams, e().sequence(result,comparison), CellType.BOOLEAN);
+		return createFunction("test_" + funcToTest.name() + "_" + expectedOutputCell, noParams, sequence(result,comparison), CellType.BOOLEAN);
 	}
 
 	public List<Function> generateTestsFor(final Function funcToTest, final String sheetName, final List<List<String>> testCasesInputs, final List<String> expectedOutputs)

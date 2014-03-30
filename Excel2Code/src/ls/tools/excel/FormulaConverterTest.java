@@ -2,10 +2,7 @@ package ls.tools.excel;
 
 
 import fj.data.List;
-import ls.tools.excel.model.BinaryOp;
-import ls.tools.excel.model.Binding;
-import ls.tools.excel.model.Function;
-import ls.tools.excel.model.VarExpr;
+import ls.tools.excel.model.*;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -21,13 +18,12 @@ import static fj.data.List.list;
 import static ls.tools.excel.BuiltInFunction.IF;
 import static ls.tools.excel.CellType.*;
 import static ls.tools.excel.model.BinaryOp.MULT;
-import static ls.tools.excel.model.ExprBuilder.e;
 import static ls.tools.excel.model.Functions.createFunction;
 import static ls.tools.excel.model.Functions.param;
 import static ls.tools.fj.Util.*;
 import static org.junit.Assert.assertTrue;
 
-public final class FormulaConverterTest 
+public final class FormulaConverterTest implements ExpressionBuilder
 {
 
 	private static final String CUBE_SQRT = "cube_sqrt";
@@ -63,8 +59,8 @@ public final class FormulaConverterTest
 	public List<Function> simple2CellMultExpectedResult()
 	{
 		return list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
-				e().sequence(
-						e().bindingOf(numericVar("_0")).to(e().binOp(e().var(B3).ofType(NUMERIC),MULT,e().var(C3).ofType(NUMERIC)))),
+				sequence(
+						bindingOf(numericVar("_0")).to(binOp(var(B3).ofType(NUMERIC),MULT,var(C3).ofType(NUMERIC)))),
 				NUMERIC));
 	}
 	
@@ -81,11 +77,11 @@ public final class FormulaConverterTest
 
 	public List<Function> simpleScalarMultExpectedResult()
 	{
-		final VarExpr localVar0 = e().var("_0").ofType(NUMERIC);
+		final VarExpr localVar0 = var("_0").ofType(NUMERIC);
 		return list(createFunction(TIMES2,list(param(B3,NUMERIC)),
-						e().sequence(
-								e().bindingOf(localVar0).to(e().numericLiteral(2)),
-								e().bindingOf(numericVar("_1")).to(e().binOp(e().var(B3).ofType(NUMERIC),MULT,localVar0))),
+						sequence(
+								bindingOf(localVar0).to(numericLiteral(2)),
+								bindingOf(numericVar("_1")).to(binOp(var(B3).ofType(NUMERIC),MULT,localVar0))),
 						NUMERIC));
 	}
 	
@@ -94,8 +90,8 @@ public final class FormulaConverterTest
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, SQUARE);
 		final List<Function> expected = list(createFunction(SQUARE,list(param(B3,NUMERIC)), 
-																				e().sequence(
-																						e().bindingOf(numericVar("_0")).to(e().binOp(e().var(B3).ofType(NUMERIC), MULT,e().var(B3).ofType(NUMERIC)))), NUMERIC));
+																				sequence(
+																						bindingOf(numericVar("_0")).to(binOp(var(B3).ofType(NUMERIC), MULT,var(B3).ofType(NUMERIC)))), NUMERIC));
 		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
 
@@ -107,16 +103,16 @@ public final class FormulaConverterTest
 		assertTrue(listsEql(result, expectedFunctions, funcEqPredicate));
 	}
 
-	private static List<Function> cubeExpectedFunctions()
+	private List<Function> cubeExpectedFunctions()
 	{
-		final VarExpr b3Var = e().var(B3).ofType(NUMERIC);
-		final VarExpr d3Var = e().var(D3).ofType(NUMERIC);
+		final VarExpr b3Var = var(B3).ofType(NUMERIC);
+		final VarExpr d3Var = var(D3).ofType(NUMERIC);
 		final Function sqr = createFunction(SQUARE,list(param(B3,NUMERIC)),
-				e().sequence(e().bindingOf(numericVar("_0")).to(e().binOp(b3Var, MULT, b3Var))), NUMERIC); 
+				sequence(bindingOf(numericVar("_0")).to(binOp(b3Var, MULT, b3Var))), NUMERIC);
 		return list(sqr,
 					createFunction(CUBE,list(param(B3,NUMERIC)),
-												e().sequence(e().bindingOf(d3Var).to(e().invocationOf(sqr).withArgs(b3Var)),
-															 e().bindingOf(numericVar("_1")).to(e().binOp(d3Var,MULT,b3Var))), NUMERIC));
+												sequence(bindingOf(d3Var).to(invocationOf(sqr).withArgs(b3Var)),
+															 bindingOf(numericVar("_1")).to(binOp(d3Var,MULT,b3Var))), NUMERIC));
 	}
 	
 	
@@ -124,14 +120,14 @@ public final class FormulaConverterTest
 	public void builtInFunctionOverAnotherFormula()
 	{
 		final List<Function> result = fc.formulasFromNamedCell(workbook(), SHEET1, CUBE_SQRT);
-		final VarExpr b3 = e().var(B3).ofType(NUMERIC);
-		final VarExpr e3 = e().var(E3).ofType(NUMERIC);
+		final VarExpr b3 = var(B3).ofType(NUMERIC);
+		final VarExpr e3 = var(E3).ofType(NUMERIC);
 		List<Function> expected = cubeExpectedFunctions();
 		final Function cubeFunc = expected.last();
 		final Function lastFunc = createFunction(CUBE_SQRT, list(param(B3,NUMERIC)),
-												e().sequence(
-														e().bindingOf(e3).to(e().invocationOf(cubeFunc).withArgs(b3)),
-														e().bindingOf(numericVar("_2")).to(e().invocationOf(BuiltInFunction.SQRT).withArgs(e3)))
+												sequence(
+														bindingOf(e3).to(invocationOf(cubeFunc).withArgs(b3)),
+														bindingOf(numericVar("_2")).to(invocationOf(BuiltInFunction.SQRT).withArgs(e3)))
 												, NUMERIC);
 		expected = expected.snoc(lastFunc);
 		assertTrue(listsEql(result, expected, funcEqPredicate));
@@ -142,14 +138,14 @@ public final class FormulaConverterTest
 	{ //TODO: cleanup + this repeats code in other places (simple2CellMultExpectedResult, etc.)
 		final List<Function> result = fc.formulasFromNamedCells(workbook(),MULT_FUNC_NAME,TIMES2);
 		final List<Function> simple2CellMultExpected = list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
-					e().sequence(
-							e().bindingOf(numericVar("_0")).to(e().binOp(e().var(B3).ofType(NUMERIC),MULT,e().var(C3).ofType(NUMERIC)))),
+					sequence(
+							bindingOf(numericVar("_0")).to(binOp(var(B3).ofType(NUMERIC),MULT,var(C3).ofType(NUMERIC)))),
 					NUMERIC));
-		final VarExpr localVar1 = e().var("_1").ofType(NUMERIC);
+		final VarExpr localVar1 = var("_1").ofType(NUMERIC);
 		final List<Function> simpleScalarMultExpected = list(createFunction(TIMES2,list(param(B3,NUMERIC)),
-						e().sequence(
-								e().bindingOf(localVar1).to(e().numericLiteral(2)),
-								e().bindingOf(numericVar("_2")).to(e().binOp(e().var(B3).ofType(NUMERIC),MULT,localVar1))),
+						sequence(
+								bindingOf(localVar1).to(numericLiteral(2)),
+								bindingOf(numericVar("_2")).to(binOp(var(B3).ofType(NUMERIC),MULT,localVar1))),
 						NUMERIC));
 		final List<Function> expected = 
 								simple2CellMultExpected
@@ -181,17 +177,17 @@ public final class FormulaConverterTest
 //			_6 : FORMULA = IF(_3 : BOOLEAN,_4 : BOOLEAN,_5 : BOOLEAN);
 		
 		//Let's build it explicitly:
-		final VarExpr _B3 = e().var(B3).ofType(NUMERIC); //The parameter to the function
-		final Binding _0 = e().bindingOf(numericVar("_0")).to(e().numericLiteral(2));
-		final Binding _1 = e().bindingOf(numericVar("_1")).to(e().invocationOf(BuiltInFunction.MOD).withArgs(_B3,_0.var()));
-		final Binding _2 = e().bindingOf(numericVar("_2")).to(e().numericLiteral(0));
-		final Binding _3 = e().bindingOf(booleanVar("_3")).to(e().binOp(_1.var(), BinaryOp.EQL, _2.var()));
-		final Binding _4 = e().bindingOf(booleanVar("_4")).to(e().booleanLiteral(true));
-		final Binding _5 = e().bindingOf(booleanVar("_5")).to(e().booleanLiteral(false));
-		final Binding _6 = e().bindingOf(e().var("_6").ofType(FORMULA)).to(e().invocationOf(IF).withArgs(_3.var(),_4.var(),_5.var()));
+		final VarExpr _B3 = var(B3).ofType(NUMERIC); //The parameter to the function
+		final Binding _0 = bindingOf(numericVar("_0")).to(numericLiteral(2));
+		final Binding _1 = bindingOf(numericVar("_1")).to(invocationOf(BuiltInFunction.MOD).withArgs(_B3,_0.var()));
+		final Binding _2 = bindingOf(numericVar("_2")).to(numericLiteral(0));
+		final Binding _3 = bindingOf(booleanVar("_3")).to(binOp(_1.var(), BinaryOp.EQL, _2.var()));
+		final Binding _4 = bindingOf(booleanVar("_4")).to(booleanLiteral(true));
+		final Binding _5 = bindingOf(booleanVar("_5")).to(booleanLiteral(false));
+		final Binding _6 = bindingOf(var("_6").ofType(FORMULA)).to(invocationOf(IF).withArgs(_3.var(),_4.var(),_5.var()));
 		
 		final List<Function> expected = list(createFunction("isEven",list(param(B3, NUMERIC)),
-												e().sequence(_0,_1,_2,_3,_4,_5,_6),
+												sequence(_0,_1,_2,_3,_4,_5,_6),
 												FORMULA));
 		assertTrue(listsEql(result, expected, funcEqPredicate));
 	}
@@ -199,13 +195,13 @@ public final class FormulaConverterTest
 	private VarExpr booleanVar(final String varName)
 	{
 		checkArgument(notEmpty(varName), "Can't have an empty variable name");
-		return e().var(varName).ofType(BOOLEAN);
+		return var(varName).ofType(BOOLEAN);
 	}
 	
-	private static VarExpr numericVar(final String varName)
+	private VarExpr numericVar(final String varName)
 	{
 		checkArgument(notEmpty(varName), "Can't have an empty variable name");
-		return e().var(varName).ofType(NUMERIC);
+		return var(varName).ofType(NUMERIC);
 	}
 	
 	private XSSFWorkbook workbook() { return _wb; }
