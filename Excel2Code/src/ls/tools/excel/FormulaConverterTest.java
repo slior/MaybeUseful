@@ -75,13 +75,18 @@ public final class FormulaConverterTest implements ExpressionBuilder
 		assertTrue("Simple scalar multiplication comparison failed.",listsEql(result, expected, funcEqPredicate));
 	}
 
-	public List<Function> simpleScalarMultExpectedResult()
+    public List<Function> simpleScalarMultExpectedResult()
+    {
+        return simpleScalarMultExpectedResult("_0","_1");
+    }
+
+	private List<Function> simpleScalarMultExpectedResult(String localVar1Name, String localVar2Name)
 	{
-		final VarExpr localVar0 = var("_0").ofType(NUMERIC);
+		final VarExpr localVar0 = var(localVar1Name).ofType(NUMERIC);
 		return list(createFunction(TIMES2,list(param(B3,NUMERIC)),
 						sequence(
 								bindingOf(localVar0).to(numericLiteral(2)),
-								bindingOf(numericVar("_1")).to(binOp(var(B3).ofType(NUMERIC),MULT,localVar0))),
+								bindingOf(numericVar(localVar2Name)).to(binOp(var(B3).ofType(NUMERIC),MULT,localVar0))),
 						NUMERIC));
 	}
 	
@@ -135,23 +140,13 @@ public final class FormulaConverterTest implements ExpressionBuilder
 	
 	@Test
 	public void generatingFunctionsForSetOfNames()
-	{ //TODO: cleanup + this repeats code in other places (simple2CellMultExpectedResult, etc.)
+	{
 		final List<Function> result = fc.formulasFromNamedCells(workbook(),MULT_FUNC_NAME,TIMES2);
-		final List<Function> simple2CellMultExpected = list(createFunction(MULT_FUNC_NAME, list(param(C3,NUMERIC),param(B3,NUMERIC)), 
-					sequence(
-							bindingOf(numericVar("_0")).to(binOp(var(B3).ofType(NUMERIC),MULT,var(C3).ofType(NUMERIC)))),
-					NUMERIC));
-		final VarExpr localVar1 = var("_1").ofType(NUMERIC);
-		final List<Function> simpleScalarMultExpected = list(createFunction(TIMES2,list(param(B3,NUMERIC)),
-						sequence(
-								bindingOf(localVar1).to(numericLiteral(2)),
-								bindingOf(numericVar("_2")).to(binOp(var(B3).ofType(NUMERIC),MULT,localVar1))),
-						NUMERIC));
-		final List<Function> expected = 
-								simple2CellMultExpected
-								.append(simpleScalarMultExpected)
+		final List<Function> expected =
+                                simple2CellMultExpectedResult()
+								.append(simpleScalarMultExpectedResult("_1","_2"))
 								.nub();
-		assertTrue(listsEql(result, expected, funcEqPredicate));
+		assertTrue(listsEql(result, expected, funcEqPredicate,true));
 	}
 	
 	@Test

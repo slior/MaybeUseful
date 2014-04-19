@@ -1,13 +1,12 @@
 package ls.tools.excel.serialize.js;
 
-import static org.junit.Assert.assertEquals;
+import fj.data.List;
 import ls.tools.excel.FormulaConverterTest;
 import ls.tools.excel.model.Function;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import fj.data.List;
+import static org.junit.Assert.assertEquals;
 
 public class JSSerializerTest
 {
